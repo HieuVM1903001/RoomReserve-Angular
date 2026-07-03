@@ -1,0 +1,66 @@
+<div class="animate-fade-in">
+  <div class="mb-8">
+    <h1 class="font-headline-md text-headline-md text-on-surface">Xin chào, {{ auth.currentUser()?.fullName }} 👋</h1>
+    <p class="text-on-surface-variant mt-1">Đây là tổng quan hoạt động đặt phòng họp của bạn hôm nay.</p>
+  </div>
+
+  <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-gutter mb-8">
+    <div class="bg-surface-container-lowest border border-surface-border rounded-xl p-6 shadow-sm">
+      <div class="flex items-center justify-between">
+        <p class="text-on-surface-variant text-body-md">Lịch chờ duyệt</p>
+        <span class="material-symbols-outlined text-status-pending">hourglass_top</span>
+      </div>
+      <p class="text-headline-lg font-headline-lg text-on-surface mt-2">{{ pendingCount }}</p>
+    </div>
+    <div class="bg-surface-container-lowest border border-surface-border rounded-xl p-6 shadow-sm">
+      <div class="flex items-center justify-between">
+        <p class="text-on-surface-variant text-body-md">Lịch đã duyệt</p>
+        <span class="material-symbols-outlined text-status-approved">event_available</span>
+      </div>
+      <p class="text-headline-lg font-headline-lg text-on-surface mt-2">{{ approvedCount }}</p>
+    </div>
+    <div class="bg-surface-container-lowest border border-surface-border rounded-xl p-6 shadow-sm">
+      <div class="flex items-center justify-between">
+        <p class="text-on-surface-variant text-body-md">Phòng đang hoạt động</p>
+        <span class="material-symbols-outlined text-primary">meeting_room</span>
+      </div>
+      <p class="text-headline-lg font-headline-lg text-on-surface mt-2">{{ activeRoomsCount }} / {{ rooms().length }}</p>
+    </div>
+  </div>
+
+  <div class="grid grid-cols-1 lg:grid-cols-2 gap-gutter">
+    <div class="bg-surface-container-lowest border border-surface-border rounded-xl p-6 shadow-sm">
+      <div class="flex items-center justify-between mb-4">
+        <h2 class="font-headline-sm text-headline-sm">Lịch đặt gần đây của tôi</h2>
+        <a routerLink="/bookings" class="text-primary text-label-md font-label-md hover:underline">Xem tất cả</a>
+      </div>
+      <div *ngIf="!loading() && myBookings().length === 0" class="text-on-surface-variant text-body-md py-6 text-center">
+        Bạn chưa có lịch đặt phòng nào.
+      </div>
+      <div *ngFor="let b of myBookings()" class="flex items-center justify-between py-3 border-b border-surface-border last:border-0">
+        <div>
+          <p class="font-label-md text-label-md text-on-surface">{{ b.title }}</p>
+          <p class="text-body-md text-on-surface-variant text-sm">{{ b.roomName }} · {{ b.startTime | date:'short' }}</p>
+        </div>
+        <span class="badge" [ngClass]="'badge-' + b.status.toLowerCase()">{{ b.status }}</span>
+      </div>
+    </div>
+
+    <div *ngIf="canApprove" class="bg-surface-container-lowest border border-surface-border rounded-xl p-6 shadow-sm">
+      <div class="flex items-center justify-between mb-4">
+        <h2 class="font-headline-sm text-headline-sm">Yêu cầu đang chờ duyệt</h2>
+        <a routerLink="/booking-approvals" class="text-primary text-label-md font-label-md hover:underline">Xem tất cả</a>
+      </div>
+      <div *ngIf="!loading() && pendingApprovals().length === 0" class="text-on-surface-variant text-body-md py-6 text-center">
+        Không có yêu cầu nào đang chờ duyệt.
+      </div>
+      <div *ngFor="let b of pendingApprovals()" class="flex items-center justify-between py-3 border-b border-surface-border last:border-0">
+        <div>
+          <p class="font-label-md text-label-md text-on-surface">{{ b.title }}</p>
+          <p class="text-body-md text-on-surface-variant text-sm">{{ b.roomName }} · {{ b.createdByUserName }}</p>
+        </div>
+        <span class="badge badge-pending">PENDING</span>
+      </div>
+    </div>
+  </div>
+</div>

@@ -1,0 +1,141 @@
+<div class="animate-fade-in">
+  <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
+    <div>
+      <h1 class="font-headline-md text-headline-md text-on-surface">Quản lý người dùng</h1>
+      <p class="text-on-surface-variant mt-1">Quản lý tài khoản, phân quyền và trạng thái người dùng.</p>
+    </div>
+    <button (click)="openCreate()" class="bg-primary text-on-primary px-5 py-3 rounded-xl font-label-md text-label-md flex items-center gap-2 shadow-sm hover:opacity-90 transition-opacity">
+      <span class="material-symbols-outlined text-[20px]">person_add</span>
+      Thêm người dùng
+    </button>
+  </div>
+
+  <div class="bg-surface-container-lowest border border-surface-border rounded-xl shadow-sm overflow-hidden">
+    <div class="p-4 border-b border-surface-border flex gap-3">
+      <div class="relative flex-1 max-w-md">
+        <span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-outline">search</span>
+        <input
+          [(ngModel)]="keyword"
+          (keyup.enter)="loadUsers()"
+          type="text"
+          placeholder="Tìm theo tên, email, số điện thoại, phòng ban..."
+          class="w-full pl-10 pr-4 py-2 bg-surface-container-low border-none rounded-full text-body-md focus:ring-2 focus:ring-primary/20"
+        />
+      </div>
+      <button (click)="loadUsers()" class="px-4 py-2 bg-surface-container rounded-full text-label-md font-label-md hover:bg-surface-container-high">Tìm kiếm</button>
+    </div>
+
+    <div class="overflow-x-auto">
+      <table class="w-full text-left">
+        <thead class="bg-surface-container-low text-on-surface-variant text-label-sm">
+          <tr>
+            <th class="px-4 py-3">Họ tên</th>
+            <th class="px-4 py-3">Email</th>
+            <th class="px-4 py-3">Phòng ban</th>
+            <th class="px-4 py-3">Chức vụ</th>
+            <th class="px-4 py-3">Vai trò</th>
+            <th class="px-4 py-3">Trạng thái</th>
+            <th class="px-4 py-3 text-right">Thao tác</th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-surface-border">
+          <tr *ngFor="let user of users()" class="hover:bg-surface-container-low/50 transition-colors">
+            <td class="px-4 py-3 font-label-md text-label-md">{{ user.fullName }}</td>
+            <td class="px-4 py-3 text-body-md text-on-surface-variant">{{ user.email }}</td>
+            <td class="px-4 py-3 text-body-md text-on-surface-variant">{{ user.department }}</td>
+            <td class="px-4 py-3 text-body-md text-on-surface-variant">{{ user.position }}</td>
+            <td class="px-4 py-3">
+              <span *ngFor="let r of user.roles" class="badge badge-approved mr-1">{{ r.code }}</span>
+            </td>
+            <td class="px-4 py-3">
+              <span class="badge" [ngClass]="user.isActive ? 'badge-approved' : 'badge-cancelled'">
+                {{ user.isActive ? 'Hoạt động' : 'Đã khóa' }}
+              </span>
+            </td>
+            <td class="px-4 py-3">
+              <div class="flex justify-end gap-2">
+                <button (click)="openRoleModal(user)" title="Phân quyền" class="p-2 hover:bg-surface-container-low rounded-full text-on-surface-variant">
+                  <span class="material-symbols-outlined text-[20px]">admin_panel_settings</span>
+                </button>
+                <button (click)="openEdit(user)" title="Sửa" class="p-2 hover:bg-surface-container-low rounded-full text-on-surface-variant">
+                  <span class="material-symbols-outlined text-[20px]">edit</span>
+                </button>
+                <button (click)="toggleLock(user)" [title]="user.isActive ? 'Khóa' : 'Mở khóa'" class="p-2 hover:bg-surface-container-low rounded-full" [ngClass]="user.isActive ? 'text-status-rejected' : 'text-status-approved'">
+                  <span class="material-symbols-outlined text-[20px]">{{ user.isActive ? 'lock' : 'lock_open' }}</span>
+                </button>
+              </div>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+      <div *ngIf="!loading() && users().length === 0" class="text-center py-10 text-on-surface-variant">Không tìm thấy người dùng nào.</div>
+    </div>
+  </div>
+</div>
+
+  <!-- Create/Edit Modal -->
+  <div *ngIf="showFormModal()" class="fixed inset-0 bg-black/50 z-[100] flex items-center justify-center p-4">
+    <div class="bg-surface-container-lowest rounded-xl shadow-xl w-full max-w-lg p-6 animate-fade-in">
+      <h2 class="font-headline-sm text-headline-sm mb-4">{{ editingUser() ? 'Cập nhật người dùng' : 'Thêm người dùng' }}</h2>
+      <form [formGroup]="form" (ngSubmit)="submitForm()" class="space-y-4">
+        <div>
+          <label class="text-label-md font-label-md">Họ và tên</label>
+          <input formControlName="fullName" class="w-full mt-1 px-3 py-2 border border-surface-border rounded-lg" />
+        </div>
+        <div>
+          <label class="text-label-md font-label-md">Email</label>
+          <input formControlName="email" class="w-full mt-1 px-3 py-2 border border-surface-border rounded-lg" />
+        </div>
+        <div class="grid grid-cols-2 gap-4">
+          <div>
+            <label class="text-label-md font-label-md">Số điện thoại</label>
+            <input formControlName="phoneNumber" class="w-full mt-1 px-3 py-2 border border-surface-border rounded-lg" />
+          </div>
+          <div>
+            <label class="text-label-md font-label-md">Phòng ban</label>
+            <input formControlName="department" class="w-full mt-1 px-3 py-2 border border-surface-border rounded-lg" />
+          </div>
+        </div>
+        <div class="grid grid-cols-2 gap-4">
+          <div>
+            <label class="text-label-md font-label-md">Chức vụ</label>
+            <input formControlName="position" class="w-full mt-1 px-3 py-2 border border-surface-border rounded-lg" />
+          </div>
+          <div>
+            <label class="text-label-md font-label-md">Tên đăng nhập</label>
+            <input formControlName="username" [readOnly]="!!editingUser()" class="w-full mt-1 px-3 py-2 border border-surface-border rounded-lg disabled:bg-surface-container" />
+          </div>
+        </div>
+        <div *ngIf="!editingUser()">
+          <label class="text-label-md font-label-md">Mật khẩu</label>
+          <input formControlName="password" type="password" class="w-full mt-1 px-3 py-2 border border-surface-border rounded-lg" />
+        </div>
+
+        <div *ngIf="errorMessage()" class="bg-error-container text-on-error-container text-body-md px-4 py-2 rounded-lg">{{ errorMessage() }}</div>
+
+        <div class="flex justify-end gap-3 pt-2">
+          <button type="button" (click)="closeFormModal()" class="px-4 py-2 rounded-lg text-label-md font-label-md hover:bg-surface-container-low">Hủy</button>
+          <button type="submit" [disabled]="saving()" class="px-5 py-2 bg-primary text-on-primary rounded-lg text-label-md font-label-md hover:opacity-90 disabled:opacity-60">
+            {{ saving() ? 'Đang lưu...' : 'Lưu' }}
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Role Assignment Modal -->
+  <div *ngIf="showRoleModal()" class="fixed inset-0 bg-black/50 z-[100] flex items-center justify-center p-4">
+    <div class="bg-surface-container-lowest rounded-xl shadow-xl w-full max-w-sm p-6 animate-fade-in">
+      <h2 class="font-headline-sm text-headline-sm mb-1">Phân quyền</h2>
+      <p class="text-on-surface-variant text-body-md mb-4">{{ roleTargetUser()?.fullName }}</p>
+      <div class="space-y-2">
+        <label *ngFor="let role of roles()" class="flex items-center gap-3 px-3 py-2 border border-surface-border rounded-lg cursor-pointer hover:bg-surface-container-low">
+          <input type="checkbox" [checked]="hasRole(roleTargetUser()!, role.code)" (change)="toggleRole(role)" class="w-4 h-4 text-primary rounded" />
+          <span class="text-body-md">{{ role.name }} <span class="text-on-surface-variant">({{ role.code }})</span></span>
+        </label>
+      </div>
+      <div class="flex justify-end pt-4">
+        <button (click)="closeRoleModal()" class="px-5 py-2 bg-primary text-on-primary rounded-lg text-label-md font-label-md hover:opacity-90">Xong</button>
+      </div>
+    </div>
+  </div>

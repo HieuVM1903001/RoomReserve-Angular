@@ -1,0 +1,115 @@
+<div class="animate-fade-in">
+  <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
+    <div>
+      <h1 class="font-headline-md text-headline-md text-on-surface">Đặt lịch của tôi</h1>
+      <p class="text-on-surface-variant mt-1">Theo dõi, chỉnh sửa và hủy các lịch đặt phòng họp của bạn.</p>
+    </div>
+    <!-- <button (click)="goToNew()" class="bg-primary text-on-primary px-5 py-3 rounded-xl font-label-md text-label-md flex items-center gap-2 shadow-sm hover:opacity-90 transition-opacity">
+      <span class="material-symbols-outlined text-[20px]">add_circle</span>
+      Tạo lịch đặt phòng
+    </button> -->
+  </div>
+
+  <div class="bg-surface-container-lowest border border-surface-border rounded-xl shadow-sm overflow-hidden">
+    <div class="p-4 border-b border-surface-border flex gap-3 items-center">
+      <label class="text-label-md font-label-md text-on-surface-variant">Trạng thái:</label>
+      <select [(ngModel)]="statusFilter" (change)="load()" class="px-3 py-2 border border-surface-border rounded-lg text-body-md">
+        <option value="">Tất cả</option>
+        <option value="PENDING">Chờ phê duyệt</option>
+        <option value="APPROVED">Đã phê duyệt</option>
+        <option value="REJECTED">Đã từ chối</option>
+        <option value="CANCELLED">Đã hủy</option>
+        <option value="COMPLETED">Đã hoàn thành</option>
+      </select>
+    </div>
+
+    <div class="overflow-x-auto">
+      <table class="w-full text-left">
+        <thead class="bg-surface-container-low text-on-surface-variant text-label-sm">
+          <tr>
+            <th class="px-4 py-3">Tiêu đề</th>
+            <th class="px-4 py-3">Phòng họp</th>
+            <th class="px-4 py-3">Thời gian</th>
+            <th class="px-4 py-3">Số người</th>
+            <th class="px-4 py-3">Trạng thái</th>
+            <th class="px-4 py-3 text-right">Thao tác</th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-surface-border">
+          <tr *ngFor="let b of bookings()" class="hover:bg-surface-container-low/50 transition-colors">
+            <td class="px-4 py-3">
+              <button (click)="viewDetail(b)" class="font-label-md text-label-md text-primary hover:underline text-left">{{ b.title }}</button>
+            </td>
+            <td class="px-4 py-3 text-body-md text-on-surface-variant">{{ b.roomName }}</td>
+            <td class="px-4 py-3 text-body-md text-on-surface-variant">{{ b.startTime | date:'short' }} – {{ b.endTime | date:'shortTime' }}</td>
+            <td class="px-4 py-3 text-body-md text-on-surface-variant">{{ b.numberOfParticipants }}</td>
+            <td class="px-4 py-3">
+              <span class="badge" [ngClass]="'badge-' + b.status.toLowerCase()">{{ statusLabel(b.status) }}</span>
+            </td>
+            <td class="px-4 py-3">
+              <div class="flex justify-end gap-2">
+                <button *ngIf="canEdit(b)" (click)="goToEdit(b)" title="Sửa" class="p-2 hover:bg-surface-container-low rounded-full text-on-surface-variant">
+                  <span class="material-symbols-outlined text-[20px]">edit</span>
+                </button>
+                <button *ngIf="canCancel(b)" (click)="openCancel(b)" title="Hủy lịch" class="p-2 hover:bg-surface-container-low rounded-full text-status-rejected">
+                  <span class="material-symbols-outlined text-[20px]">cancel</span>
+                </button>
+              </div>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+      <div *ngIf="!loading() && bookings().length === 0" class="text-center py-10 text-on-surface-variant">Bạn chưa có lịch đặt phòng nào.</div>
+    </div>
+  </div>
+</div>
+
+  <!-- Detail modal -->
+  <div *ngIf="detailBooking() as b" class="fixed inset-0 bg-black/50 z-[100] flex items-center justify-center p-4">
+    <div class="bg-surface-container-lowest rounded-xl shadow-xl w-full max-w-lg p-6 animate-fade-in max-h-[90vh] overflow-y-auto">
+      <div class="flex justify-between items-start mb-4">
+        <h2 class="font-headline-sm text-headline-sm">{{ b.title }}</h2>
+        <span class="badge" [ngClass]="'badge-' + b.status.toLowerCase()">{{ statusLabel(b.status) }}</span>
+      </div>
+      <div class="space-y-2 text-body-md">
+        <p><span class="text-on-surface-variant">Phòng họp:</span> {{ b.roomName }} ({{ b.roomLocation }})</p>
+        <p><span class="text-on-surface-variant">Thời gian:</span> {{ b.startTime | date:'medium' }} - {{ b.endTime | date:'shortTime' }}</p>
+        <p><span class="text-on-surface-variant">Số người tham gia:</span> {{ b.numberOfParticipants }}</p>
+        <p *ngIf="b.description"><span class="text-on-surface-variant">Nội dung:</span> {{ b.description }}</p>
+        <p *ngIf="b.note"><span class="text-on-surface-variant">Ghi chú:</span> {{ b.note }}</p>
+        <p *ngIf="b.rejectReason" class="text-status-rejected"><span class="text-on-surface-variant">Lý do từ chối:</span> {{ b.rejectReason }}</p>
+        <p *ngIf="b.cancelReason" class="text-status-cancelled"><span class="text-on-surface-variant">Lý do hủy:</span> {{ b.cancelReason }}</p>
+        <div *ngIf="b.participants?.length">
+          <p class="text-on-surface-variant">Người tham gia:</p>
+          <ul class="list-disc pl-5">
+            <li *ngFor="let p of b.participants">{{ p.fullName }} ({{ p.email }})</li>
+          </ul>
+        </div>
+        <div *ngIf="b.histories?.length">
+          <p class="text-on-surface-variant mt-3 mb-1">Lịch sử thay đổi trạng thái:</p>
+          <ul class="space-y-1">
+            <li *ngFor="let h of b.histories" class="text-body-md text-on-surface-variant">
+              {{ h.createdAt | date:'short' }} — {{ h.oldStatus || '—' }} → {{ h.newStatus }} <span *ngIf="h.note">({{ h.note }})</span>
+            </li>
+          </ul>
+        </div>
+      </div>
+      <div class="flex justify-end pt-4">
+        <button (click)="closeDetail()" class="px-5 py-2 bg-primary text-on-primary rounded-lg text-label-md font-label-md hover:opacity-90">Đóng</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Cancel modal -->
+  <div *ngIf="showCancelModal()" class="fixed inset-0 bg-black/50 z-[100] flex items-center justify-center p-4">
+    <div class="bg-surface-container-lowest rounded-xl shadow-xl w-full max-w-md p-6 animate-fade-in">
+      <h2 class="font-headline-sm text-headline-sm mb-3">Hủy lịch đặt phòng</h2>
+      <p class="text-on-surface-variant text-body-md mb-3">{{ cancelTarget?.title }}</p>
+      <label class="text-label-md font-label-md">Lý do hủy</label>
+      <textarea [(ngModel)]="cancelReason" rows="3" class="w-full mt-1 px-3 py-2 border border-surface-border rounded-lg" placeholder="Nhập lý do hủy lịch..."></textarea>
+      <div class="flex justify-end gap-3 pt-4">
+        <button (click)="closeCancel()" class="px-4 py-2 rounded-lg text-label-md font-label-md hover:bg-surface-container-low">Đóng</button>
+        <button (click)="confirmCancel()" [disabled]="!cancelReason.trim()" class="px-5 py-2 bg-status-rejected text-white rounded-lg text-label-md font-label-md hover:opacity-90 disabled:opacity-60">Xác nhận hủy</button>
+      </div>
+    </div>
+  </div>

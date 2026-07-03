@@ -1,0 +1,70 @@
+<div class="animate-fade-in max-w-3xl">
+  <div class="mb-6">
+    <h1 class="font-headline-md text-headline-md text-on-surface">{{ isEdit ? 'Sửa lịch đặt phòng' : 'Tạo yêu cầu đặt lịch' }}</h1>
+    <p class="text-on-surface-variant mt-1">Điền thông tin cuộc họp và thời gian sử dụng phòng.</p>
+  </div>
+
+  <form [formGroup]="form" (ngSubmit)="submit()" class="bg-surface-container-lowest border border-surface-border rounded-xl p-6 shadow-sm space-y-5">
+    <div>
+      <label class="text-label-md font-label-md">Phòng họp</label>
+      <select formControlName="roomId" class="w-full mt-1 px-3 py-2 border border-surface-border rounded-lg">
+        <option [ngValue]="null" disabled>-- Chọn phòng họp --</option>
+        <option *ngFor="let r of rooms()" [ngValue]="r.id">{{ r.name }} · {{ r.location }} · {{ r.capacity }} người</option>
+      </select>
+    </div>
+
+    <div>
+      <label class="text-label-md font-label-md">Tiêu đề cuộc họp</label>
+      <input formControlName="title" class="w-full mt-1 px-3 py-2 border border-surface-border rounded-lg" />
+    </div>
+
+    <div>
+      <label class="text-label-md font-label-md">Nội dung cuộc họp</label>
+      <textarea formControlName="description" rows="2" class="w-full mt-1 px-3 py-2 border border-surface-border rounded-lg"></textarea>
+    </div>
+
+    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+      <div>
+        <label class="text-label-md font-label-md">Thời gian bắt đầu</label>
+        <input formControlName="startTime" type="datetime-local" class="w-full mt-1 px-3 py-2 border border-surface-border rounded-lg" />
+      </div>
+      <div>
+        <label class="text-label-md font-label-md">Thời gian kết thúc</label>
+        <input formControlName="endTime" type="datetime-local" class="w-full mt-1 px-3 py-2 border border-surface-border rounded-lg" />
+      </div>
+    </div>
+
+    <div>
+      <label class="text-label-md font-label-md">Số lượng người tham gia</label>
+      <input formControlName="numberOfParticipants" type="number" min="1" class="w-full mt-1 px-3 py-2 border border-surface-border rounded-lg" />
+    </div>
+
+    <div formArrayName="participants">
+      <div class="flex items-center justify-between mb-2">
+        <label class="text-label-md font-label-md">Danh sách người tham gia</label>
+        <button type="button" (click)="addParticipant()" class="text-primary text-label-sm font-label-md hover:underline">+ Thêm người</button>
+      </div>
+      <div *ngFor="let p of participants.controls; let i = index" [formGroupName]="i" class="grid grid-cols-1 sm:grid-cols-[1fr_1fr_auto] gap-2 mb-2">
+        <input formControlName="fullName" placeholder="Họ tên" class="px-3 py-2 border border-surface-border rounded-lg" />
+        <input formControlName="email" placeholder="Email" class="px-3 py-2 border border-surface-border rounded-lg" />
+        <button type="button" (click)="removeParticipant(i)" class="p-2 text-status-rejected hover:bg-surface-container-low rounded-lg">
+          <span class="material-symbols-outlined text-[20px]">delete</span>
+        </button>
+      </div>
+    </div>
+
+    <div>
+      <label class="text-label-md font-label-md">Ghi chú</label>
+      <textarea formControlName="note" rows="2" class="w-full mt-1 px-3 py-2 border border-surface-border rounded-lg"></textarea>
+    </div>
+
+    <div *ngIf="errorMessage()" class="bg-error-container text-on-error-container text-body-md px-4 py-3 rounded-lg">{{ errorMessage() }}</div>
+
+    <div class="flex justify-end gap-3 pt-2">
+      <button type="button" (click)="cancel()" class="px-4 py-2 rounded-lg text-label-md font-label-md hover:bg-surface-container-low">Hủy</button>
+      <button type="submit" [disabled]="saving()" class="px-6 py-2.5 bg-primary text-on-primary rounded-lg text-label-md font-label-md hover:opacity-90 disabled:opacity-60">
+        {{ saving() ? 'Đang lưu...' : (isEdit ? 'Cập nhật' : 'Gửi yêu cầu') }}
+      </button>
+    </div>
+  </form>
+</div>

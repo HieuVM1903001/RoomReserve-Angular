@@ -1,0 +1,99 @@
+<div class="animate-fade-in">
+  <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
+    <div>
+      <h1 class="font-headline-md text-headline-md text-on-surface">Danh mục phòng họp</h1>
+      <p class="text-on-surface-variant mt-1">Quản lý thông tin, sức chứa và trạng thái hoạt động của các phòng họp.</p>
+    </div>
+    <button *ngIf="isAdmin" (click)="openCreate()" class="bg-primary text-on-primary px-5 py-3 rounded-xl font-label-md text-label-md flex items-center gap-2 shadow-sm hover:opacity-90 transition-opacity">
+      <span class="material-symbols-outlined text-[20px]">add</span>
+      Thêm phòng họp
+    </button>
+  </div>
+
+  <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-gutter">
+    <div *ngFor="let room of rooms()" class="bg-surface-container-lowest border border-surface-border rounded-xl p-6 shadow-sm flex flex-col">
+      <div class="flex items-start justify-between mb-3">
+        <div>
+          <p class="font-headline-sm text-headline-sm text-on-surface">{{ room.name }}</p>
+          <p class="text-body-md text-on-surface-variant">{{ room.code }} · {{ room.location }}</p>
+        </div>
+        <span class="badge" [ngClass]="statusBadgeClass(room.status)">{{ statusLabel(room.status) }}</span>
+      </div>
+      <p class="text-body-md text-on-surface-variant flex items-center gap-1 mb-2">
+        <span class="material-symbols-outlined text-[18px]">group</span> Sức chứa: {{ room.capacity }} người
+      </p>
+      <div class="flex flex-wrap gap-1 mb-3">
+        <span *ngFor="let eq of room.equipment" class="text-[11px] px-2 py-1 bg-surface-container rounded-full text-on-surface-variant">{{ eq }}</span>
+      </div>
+      <p class="text-body-md text-on-surface-variant flex-1">{{ room.description }}</p>
+      <div *ngIf="isAdmin" class="flex justify-end gap-2 mt-4 pt-4 border-t border-surface-border">
+        <button (click)="openEdit(room)" class="p-2 hover:bg-surface-container-low rounded-full text-on-surface-variant">
+          <span class="material-symbols-outlined text-[20px]">edit</span>
+        </button>
+        <button (click)="deleteRoom(room)" class="p-2 hover:bg-surface-container-low rounded-full text-status-rejected">
+          <span class="material-symbols-outlined text-[20px]">delete</span>
+        </button>
+      </div>
+    </div>
+  </div>
+  <div *ngIf="!loading() && rooms().length === 0" class="text-center py-10 text-on-surface-variant">Chưa có phòng họp nào.</div>
+</div>
+
+  <!-- Create/Edit Modal -->
+  <div *ngIf="showModal()" class="fixed inset-0 bg-black/50 z-[100] flex items-center justify-center p-4">
+    <div class="bg-surface-container-lowest rounded-xl shadow-xl w-full max-w-lg p-6 animate-fade-in max-h-[90vh] overflow-y-auto">
+      <h2 class="font-headline-sm text-headline-sm mb-4">{{ editingRoom() ? 'Cập nhật phòng họp' : 'Thêm phòng họp' }}</h2>
+      <form [formGroup]="form" (ngSubmit)="submitForm()" class="space-y-4">
+        <div class="grid grid-cols-2 gap-4">
+          <div>
+            <label class="text-label-md font-label-md">Mã phòng</label>
+            <input formControlName="code" class="w-full mt-1 px-3 py-2 border border-surface-border rounded-lg" />
+          </div>
+          <div>
+            <label class="text-label-md font-label-md">Tên phòng</label>
+            <input formControlName="name" class="w-full mt-1 px-3 py-2 border border-surface-border rounded-lg" />
+          </div>
+        </div>
+        <div class="grid grid-cols-2 gap-4">
+          <div>
+            <label class="text-label-md font-label-md">Vị trí</label>
+            <input formControlName="location" class="w-full mt-1 px-3 py-2 border border-surface-border rounded-lg" />
+          </div>
+          <div>
+            <label class="text-label-md font-label-md">Sức chứa</label>
+            <input formControlName="capacity" type="number" min="1" class="w-full mt-1 px-3 py-2 border border-surface-border rounded-lg" />
+          </div>
+        </div>
+        <div>
+          <label class="text-label-md font-label-md">Mô tả</label>
+          <textarea formControlName="description" rows="2" class="w-full mt-1 px-3 py-2 border border-surface-border rounded-lg"></textarea>
+        </div>
+        <div>
+          <label class="text-label-md font-label-md">Trạng thái</label>
+          <select formControlName="status" class="w-full mt-1 px-3 py-2 border border-surface-border rounded-lg">
+            <option value="ACTIVE">Hoạt động</option>
+            <option value="INACTIVE">Tạm ngưng</option>
+            <option value="MAINTENANCE">Bảo trì</option>
+          </select>
+        </div>
+        <div formArrayName="equipment">
+          <label class="text-label-md font-label-md">Thiết bị hỗ trợ</label>
+          <div class="grid grid-cols-2 gap-2 mt-1">
+            <label *ngFor="let eq of equipmentOptions; let i = index" class="flex items-center gap-2 text-body-md">
+              <input type="checkbox" [formControlName]="i" class="w-4 h-4 text-primary rounded" />
+              {{ eq }}
+            </label>
+          </div>
+        </div>
+
+        <div *ngIf="errorMessage()" class="bg-error-container text-on-error-container text-body-md px-4 py-2 rounded-lg">{{ errorMessage() }}</div>
+
+        <div class="flex justify-end gap-3 pt-2">
+          <button type="button" (click)="closeModal()" class="px-4 py-2 rounded-lg text-label-md font-label-md hover:bg-surface-container-low">Hủy</button>
+          <button type="submit" [disabled]="saving()" class="px-5 py-2 bg-primary text-on-primary rounded-lg text-label-md font-label-md hover:opacity-90 disabled:opacity-60">
+            {{ saving() ? 'Đang lưu...' : 'Lưu' }}
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>

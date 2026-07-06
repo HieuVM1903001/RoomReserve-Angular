@@ -67,18 +67,19 @@
       <div class="relative flex-1 max-w-md">
         <span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-outline">search</span>
         <input
-          [(ngModel)]="keyword"
+          [value]="keyword()"
+          (input)="onKeywordChange($event)"
           (keyup.enter)="loadUsers()"
           type="text"
           placeholder="Tìm theo tên, email, số điện thoại, phòng ban..."
           class="w-full pl-10 pr-4 py-2 bg-surface-container-low border-none rounded-full text-body-md focus:ring-2 focus:ring-primary/20"
         />
       </div>
-      <select [(ngModel)]="roleFilter" class="bg-surface border border-surface-border rounded-lg text-body-md px-3 py-2 focus:ring-primary/20">
+      <select [value]="roleFilter()" (change)="onRoleFilterChange($event)" class="bg-surface border border-surface-border rounded-lg text-body-md px-3 py-2 focus:ring-primary/20">
         <option value="">Tất cả quyền hạn</option>
         <option *ngFor="let r of roles()" [value]="r.code">{{ r.name }}</option>
       </select>
-      <select [(ngModel)]="departmentFilter" class="bg-surface border border-surface-border rounded-lg text-body-md px-3 py-2 focus:ring-primary/20">
+      <select [value]="departmentFilter()" (change)="onDepartmentFilterChange($event)" class="bg-surface border border-surface-border rounded-lg text-body-md px-3 py-2 focus:ring-primary/20">
         <option value="">Tất cả phòng ban</option>
         <option *ngFor="let d of departments()" [value]="d">{{ d }}</option>
       </select>
@@ -192,18 +193,24 @@
   </div>
 
   <!-- Role Assignment Modal -->
+  <!-- Checkbox changes only update local `pendingRoleCodes` state; the actual
+       AssignRolesRequest is sent once, when "Lưu" is clicked. -->
   <div *ngIf="showRoleModal()" class="fixed inset-0 bg-black/50 z-[100] flex items-center justify-center p-4">
     <div class="bg-surface-container-lowest rounded-xl shadow-xl w-full max-w-sm p-6 animate-fade-in">
       <h2 class="font-headline-sm text-headline-sm mb-1">Phân quyền</h2>
       <p class="text-on-surface-variant text-body-md mb-4">{{ roleTargetUser()?.fullName }}</p>
       <div class="space-y-2">
         <label *ngFor="let role of roles()" class="flex items-center gap-3 px-3 py-2 border border-surface-border rounded-lg cursor-pointer hover:bg-surface-container-low">
-          <input type="checkbox" [checked]="hasRole(roleTargetUser()!, role.code)" (change)="toggleRole(role)" class="w-4 h-4 text-primary rounded" />
+          <input type="checkbox" [checked]="isPendingRole(role.code)" (change)="toggleRolePending(role.code)" class="w-4 h-4 text-primary rounded" />
           <span class="text-body-md">{{ role.name }} <span class="text-on-surface-variant">({{ role.code }})</span></span>
         </label>
       </div>
-      <div class="flex justify-end pt-4">
-        <button (click)="closeRoleModal()" class="px-5 py-2 bg-primary text-on-primary rounded-lg text-label-md font-label-md hover:opacity-90">Xong</button>
+      <div *ngIf="roleErrorMessage()" class="bg-error-container text-on-error-container text-body-md px-4 py-2 rounded-lg mt-3">{{ roleErrorMessage() }}</div>
+      <div class="flex justify-end gap-3 pt-4">
+        <button (click)="closeRoleModal()" [disabled]="savingRoles()" class="px-4 py-2 rounded-lg text-label-md font-label-md hover:bg-surface-container-low">Hủy</button>
+        <button (click)="submitRoles()" [disabled]="savingRoles()" class="px-5 py-2 bg-primary text-on-primary rounded-lg text-label-md font-label-md hover:opacity-90 disabled:opacity-60">
+          {{ savingRoles() ? 'Đang lưu...' : 'Lưu' }}
+        </button>
       </div>
     </div>
   </div>

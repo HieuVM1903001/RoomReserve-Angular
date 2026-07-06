@@ -57,7 +57,7 @@
   <div class="bg-surface-container-lowest border border-surface-border rounded-xl shadow-sm overflow-hidden">
     <!-- Filters -->
     <div class="p-4 border-b border-surface-border flex flex-wrap gap-3 items-center">
-      <select [ngModel]="statusFilter()" (ngModelChange)="statusFilter.set($event)" class="px-3 py-2 border border-surface-border rounded-lg text-body-md">
+      <select [value]="statusFilter()" (change)="onStatusFilterChange($event)" class="px-3 py-2 border border-surface-border rounded-lg text-body-md">
         <option value="">Tất cả trạng thái</option>
         <option value="PENDING">Chờ phê duyệt</option>
         <option value="APPROVED">Đã phê duyệt</option>
@@ -65,16 +65,16 @@
         <option value="CANCELLED">Đã hủy</option>
         <option value="COMPLETED">Đã hoàn thành</option>
       </select>
-      <select [ngModel]="roomFilter()" (ngModelChange)="roomFilter.set($event)" class="px-3 py-2 border border-surface-border rounded-lg text-body-md">
-        <option [ngValue]="''">Tất cả phòng</option>
-        <option *ngFor="let r of rooms()" [ngValue]="r.id">{{ r.name }}</option>
+      <select [value]="roomFilter()" (change)="onRoomFilterChange($event)" class="px-3 py-2 border border-surface-border rounded-lg text-body-md">
+        <option value="">Tất cả phòng</option>
+        <option *ngFor="let r of rooms()" [value]="r.id">{{ r.name }}</option>
       </select>
-      <input type="date" [ngModel]="dateFilter()" (ngModelChange)="dateFilter.set($event)" class="px-3 py-2 border border-surface-border rounded-lg text-body-md" />
+      <input type="date" [value]="dateFilter()" (change)="onDateFilterChange($event)" class="px-3 py-2 border border-surface-border rounded-lg text-body-md" />
       <div class="relative flex-1 min-w-[220px]">
         <span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-outline">search</span>
         <input
-          [ngModel]="keyword()"
-          (ngModelChange)="keyword.set($event)"
+          [value]="keyword()"
+          (input)="onKeywordChange($event)"
           placeholder="Tìm theo tiêu đề hoặc người đặt..."
           class="w-full pl-10 pr-4 py-2 bg-surface-container-low border-none rounded-full text-body-md focus:ring-2 focus:ring-primary/20"
         />

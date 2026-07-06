@@ -9,7 +9,7 @@ export interface AppUser {
   position?: string;
   username: string;
   isActive: boolean;
-  roles: Role[];
+  roles: string[];
   createdAt?: string;
   updatedAt?: string;
 }

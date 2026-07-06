@@ -48,11 +48,12 @@ export class UserService {
     return this.http.get<Role[]>(`${environment.apiUrl}/roles`);
   }
 
-  assignRole(userId: number, roleId: number): Observable<void> {
-    return this.http.post<void>(`${environment.apiUrl}/users/${userId}/roles`, { roleId });
-  }
-
-  revokeRole(userId: number, roleId: number): Observable<void> {
-    return this.http.delete<void>(`${environment.apiUrl}/users/${userId}/roles/${roleId}`);
+  /**
+   * Replaces a user's full set of roles in one call, matching the backend's
+   * `AssignRolesRequest { RoleCodes: List<string> }` contract. Meant to be sent
+   * once (on a form submit), not per-checkbox-toggle.
+   */
+  assignRoles(userId: number, roleCodes: string[]): Observable<void> {
+    return this.http.post<void>(`${this.baseUrl}/${userId}/roles`, { roleCodes });
   }
 }

@@ -15,16 +15,26 @@ export class UserListComponent implements OnInit {
   users = signal<AppUser[]>([]);
   roles = signal<Role[]>([]);
   loading = signal(true);
-  keyword = '';
-  roleFilter = ''; // role code, e.g. 'ADMIN'
-  departmentFilter = '';
+
+  // Filters — all signals, so `filteredUsers` reliably recomputes on every change.
+  // (Plain component fields don't establish a dependency for `computed()`, which
+  // was why the role/department filters previously appeared to do nothing.)
+  keyword = signal('');
+  roleFilter = signal('');
+  departmentFilter = signal('');
 
   showFormModal = signal(false);
   showRoleModal = signal(false);
   editingUser = signal<AppUser | null>(null);
   roleTargetUser = signal<AppUser | null>(null);
   saving = signal(false);
+  savingRoles = signal(false);
   errorMessage = signal<string | null>(null);
+  roleErrorMessage = signal<string | null>(null);
+
+  // Roles checked in the modal, held locally until "Lưu" is pressed —
+  // nothing is sent to the API on individual checkbox clicks.
+  pendingRoleCodes = signal<string[]>([]);
 
   // Summary stats mirroring the bento row in the design mockup
   activeCount = computed(() => this.users().filter((u) => u.isActive).length);
@@ -42,9 +52,11 @@ export class UserListComponent implements OnInit {
 
   /** Client-side filter by role / department on top of the server-side keyword search */
   filteredUsers = computed<AppUser[]>(() => {
+    const role = this.roleFilter();
+    const dept = this.departmentFilter();
     return this.users().filter((u) => {
-      const matchesRole = !this.roleFilter || this.hasRole(u, this.roleFilter);
-      const matchesDept = !this.departmentFilter || u.department === this.departmentFilter;
+      const matchesRole = !role || this.hasRole(u, role);
+      const matchesDept = !dept || u.department === dept;
       return matchesRole && matchesDept;
     });
   });
@@ -77,7 +89,7 @@ export class UserListComponent implements OnInit {
 
   loadUsers(): void {
     this.loading.set(true);
-    this.userService.getAll({ keyword: this.keyword, page: 1, pageSize: 10 }).subscribe({
+    this.userService.getAll({ keyword: this.keyword(), page: 1, pageSize: 99 }).subscribe({
       next: (res) => {
         this.users.set(res.items);
         this.loading.set(false);
@@ -86,12 +98,26 @@ export class UserListComponent implements OnInit {
     });
   }
 
+  // --- Filter change handlers -------------------------------------------------
+  onKeywordChange(event: Event): void {
+    this.keyword.set((event.target as HTMLInputElement).value);
+  }
+
+  onRoleFilterChange(event: Event): void {
+    this.roleFilter.set((event.target as HTMLSelectElement).value);
+  }
+
+  onDepartmentFilterChange(event: Event): void {
+    this.departmentFilter.set((event.target as HTMLSelectElement).value);
+  }
+
   resetFilters(): void {
-    this.keyword = '';
-    this.roleFilter = '';
-    this.departmentFilter = '';
+    this.keyword.set('');
+    this.roleFilter.set('');
+    this.departmentFilter.set('');
     this.loadUsers();
   }
+  // -----------------------------------------------------------------------
 
   openCreate(): void {
     this.editingUser.set(null);
@@ -173,8 +199,18 @@ export class UserListComponent implements OnInit {
     action.subscribe(() => this.loadUsers());
   }
 
+  hasRole(user: AppUser, roleCode: string): boolean {
+    return user.roles?.some((r) => r === roleCode) ?? false;
+  }
+
+  // --- Role assignment modal ---------------------------------------------
+  // Checkbox toggles only update local state; the API call fires once, when
+  // "Lưu" is clicked, sending the full RoleCodes list the backend expects.
+
   openRoleModal(user: AppUser): void {
     this.roleTargetUser.set(user);
+    this.pendingRoleCodes.set((user.roles ?? []));
+    this.roleErrorMessage.set(null);
     this.showRoleModal.set(true);
   }
 
@@ -182,25 +218,43 @@ export class UserListComponent implements OnInit {
     this.showRoleModal.set(false);
   }
 
-  hasRole(user: AppUser, roleCode: string): boolean {
-    return user.roles?.some((r) => r.code === roleCode) ?? false;
+  isPendingRole(roleCode: string): boolean {
+    return this.pendingRoleCodes().includes(roleCode);
   }
 
-  toggleRole(role: Role): void {
+  toggleRolePending(roleCode: string): void {
+    const current = this.pendingRoleCodes();
+    this.pendingRoleCodes.set(
+      current.includes(roleCode) ? current.filter((c) => c !== roleCode) : [...current, roleCode]
+    );
+  }
+
+  submitRoles(): void {
     const user = this.roleTargetUser();
     if (!user) return;
-    const has = this.hasRole(user, role.code);
-    const action = has ? this.userService.revokeRole(user.id, role.id) : this.userService.assignRole(user.id, role.id);
-    action.subscribe(() => {
-      this.loadUsers();
-      const refreshed = this.users().find((u) => u.id === user.id);
-      if (refreshed) this.roleTargetUser.set(refreshed);
+    if (this.pendingRoleCodes().length === 0) {
+      this.roleErrorMessage.set('Vui lòng chọn ít nhất 1 quyền.');
+      return;
+    }
+    this.roleErrorMessage.set(null);
+    this.savingRoles.set(true);
+    this.userService.assignRoles(user.id, this.pendingRoleCodes()).subscribe({
+      next: () => {
+        this.savingRoles.set(false);
+        this.showRoleModal.set(false);
+        this.loadUsers();
+      },
+      error: (err) => {
+        this.savingRoles.set(false);
+        this.roleErrorMessage.set(err?.error?.message || 'Có lỗi xảy ra, vui lòng thử lại.');
+      },
     });
   }
+  // -----------------------------------------------------------------------
 
   /** Exports the currently filtered users as a CSV file the browser downloads directly. */
   exportReport(): void {
-    const headers = ['Họ tên', 'Email', 'Số điện thoại', 'Phòng ban', 'Chức vụ', 'Tên đăng nhập', 'Quyền hạn', 'Trạng thái'];
+    const headers = ['Họ tên', 'Email', 'Số điện thoại', 'Phòng ban', 'Chức vụ', 'Tên đăng nhập', 'Vai trò', 'Trạng thái'];
     const rows = this.filteredUsers().map((u) => [
       u.fullName,
       u.email,

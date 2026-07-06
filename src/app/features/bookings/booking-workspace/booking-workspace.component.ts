@@ -69,8 +69,15 @@ export class BookingWorkspaceComponent implements OnInit {
 
     return this.masterBookings().filter((b) => {
       if (status && b.status !== status) return false;
-      if (roomId && b.roomId !== Number(roomId)) return false;
-      if (date && new Date(b.startTime).toDateString() !== new Date(date).toDateString()) return false;
+      // Coerce both sides to Number explicitly — roomId can arrive as a string
+      // from a native <select>'s value, and this keeps the comparison solid
+      // regardless of where it came from.
+      if (roomId !== '' && Number(b.roomId) !== Number(roomId)) return false;
+      if (date) {
+        const bookingDay = new Date(b.startTime).toDateString();
+        const filterDay = new Date(date + 'T00:00:00').toDateString();
+        if (bookingDay !== filterDay) return false;
+      }
       if (q) {
         const haystack = `${b.title} ${b.createdByUserName ?? ''}`.toLowerCase();
         if (!haystack.includes(q)) return false;
@@ -92,8 +99,8 @@ export class BookingWorkspaceComponent implements OnInit {
   load(): void {
     this.loading.set(true);
     const source$ = this.isManager
-      ? this.approvalService.getAll({ page: 1, pageSize: 10 })
-      : this.bookingService.getMy({ page: 1, pageSize: 10 });
+      ? this.approvalService.getAll({ page: 1, pageSize: 99 })
+      : this.bookingService.getMy({ page: 1, pageSize: 99 });
 
     source$.subscribe({
       next: (res) => {
@@ -116,12 +123,40 @@ export class BookingWorkspaceComponent implements OnInit {
     }
   }
 
+  // --- Filter change handlers -------------------------------------------------
+  // Plain (change)/(input) handlers reading event.target.value directly, rather
+  // than [ngModel]/[ngValue] on the <select> elements — this avoids any
+  // ambiguity from Angular's option-value identity mapping and guarantees the
+  // room filter (and friends) always reflects exactly what's selected.
+
+  onStatusFilterChange(event: Event): void {
+    const value = (event.target as HTMLSelectElement).value as BookingStatus | '';
+    this.statusFilter.set(value);
+  }
+
+  onRoomFilterChange(event: Event): void {
+    const value = (event.target as HTMLSelectElement).value;
+    this.roomFilter.set(value ? Number(value) : '');
+  }
+
+  onDateFilterChange(event: Event): void {
+    const value = (event.target as HTMLInputElement).value;
+    this.dateFilter.set(value);
+  }
+
+  onKeywordChange(event: Event): void {
+    const value = (event.target as HTMLInputElement).value;
+    this.keyword.set(value);
+  }
+
   resetFilters(): void {
     this.statusFilter.set('');
     this.roomFilter.set('');
     this.dateFilter.set('');
     this.keyword.set('');
   }
+
+  // -----------------------------------------------------------------------
 
   statusLabel(status: BookingStatus): string {
     return {

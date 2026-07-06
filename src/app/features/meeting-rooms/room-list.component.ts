@@ -1,6 +1,7 @@
-import { Component, OnInit, signal , inject } from '@angular/core';
+import { Component, OnInit, signal, computed, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
+import { ActivatedRoute } from '@angular/router';
 import { AuthService } from '../../core/services/auth.service';
 import { MeetingRoomService } from '../../core/services/meeting-room.service';
 import { MeetingRoom, RoomStatus } from '../../core/models/meeting-room.model';
@@ -22,7 +23,15 @@ export class RoomListComponent implements OnInit {
   errorMessage = signal<string | null>(null);
   equipmentOptions = EQUIPMENT_OPTIONS;
 
+  /** Room id passed via ?highlight= from the header's global search, used to visually flag a room */
+  highlightId = signal<number | null>(null);
+
   private fb = inject(FormBuilder);
+
+  // Summary stats mirroring the mini bento row in the design mockup
+  activeCount = computed(() => this.rooms().filter((r) => r.status === 'ACTIVE').length);
+  maintenanceCount = computed(() => this.rooms().filter((r) => r.status === 'MAINTENANCE').length);
+  totalCapacity = computed(() => this.rooms().reduce((sum, r) => sum + (r.capacity || 0), 0));
 
   form = this.fb.group({
     code: ['', Validators.required],
@@ -34,9 +43,11 @@ export class RoomListComponent implements OnInit {
     equipment: this.fb.array(EQUIPMENT_OPTIONS.map(() => false)),
   });
 
-  constructor(private roomService: MeetingRoomService, public auth: AuthService) {}
+  constructor(private roomService: MeetingRoomService, public auth: AuthService, private route: ActivatedRoute) {}
 
   ngOnInit(): void {
+    const highlight = Number(this.route.snapshot.queryParamMap.get('highlight'));
+    if (highlight) this.highlightId.set(highlight);
     this.loadRooms();
   }
 

@@ -1,4 +1,4 @@
-import { Component, OnInit, signal , inject } from '@angular/core';
+import { Component, OnInit, signal, computed, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
 import { UserService } from '../../core/services/user.service';
@@ -16,6 +16,8 @@ export class UserListComponent implements OnInit {
   roles = signal<Role[]>([]);
   loading = signal(true);
   keyword = '';
+  roleFilter = ''; // role code, e.g. 'ADMIN'
+  departmentFilter = '';
 
   showFormModal = signal(false);
   showRoleModal = signal(false);
@@ -23,6 +25,29 @@ export class UserListComponent implements OnInit {
   roleTargetUser = signal<AppUser | null>(null);
   saving = signal(false);
   errorMessage = signal<string | null>(null);
+
+  // Summary stats mirroring the bento row in the design mockup
+  activeCount = computed(() => this.users().filter((u) => u.isActive).length);
+  lockedCount = computed(() => this.users().filter((u) => !u.isActive).length);
+  adminCount = computed(() => this.users().filter((u) => this.hasRole(u, 'ADMIN')).length);
+
+  /** Distinct department list, derived from the loaded users, to populate the filter dropdown */
+  departments = computed<string[]>(() => {
+    const set = new Set<string>();
+    this.users().forEach((u) => {
+      if (u.department) set.add(u.department);
+    });
+    return Array.from(set).sort();
+  });
+
+  /** Client-side filter by role / department on top of the server-side keyword search */
+  filteredUsers = computed<AppUser[]>(() => {
+    return this.users().filter((u) => {
+      const matchesRole = !this.roleFilter || this.hasRole(u, this.roleFilter);
+      const matchesDept = !this.departmentFilter || u.department === this.departmentFilter;
+      return matchesRole && matchesDept;
+    });
+  });
 
   private fb = inject(FormBuilder);
 
@@ -52,13 +77,20 @@ export class UserListComponent implements OnInit {
 
   loadUsers(): void {
     this.loading.set(true);
-    this.userService.getAll({ keyword: this.keyword, page: 1, pageSize: 50 }).subscribe({
+    this.userService.getAll({ keyword: this.keyword, page: 1, pageSize: 10 }).subscribe({
       next: (res) => {
         this.users.set(res.items);
         this.loading.set(false);
       },
       error: () => this.loading.set(false),
     });
+  }
+
+  resetFilters(): void {
+    this.keyword = '';
+    this.roleFilter = '';
+    this.departmentFilter = '';
+    this.loadUsers();
   }
 
   openCreate(): void {
@@ -164,5 +196,33 @@ export class UserListComponent implements OnInit {
       const refreshed = this.users().find((u) => u.id === user.id);
       if (refreshed) this.roleTargetUser.set(refreshed);
     });
+  }
+
+  /** Exports the currently filtered users as a CSV file the browser downloads directly. */
+  exportReport(): void {
+    const headers = ['Họ tên', 'Email', 'Số điện thoại', 'Phòng ban', 'Chức vụ', 'Tên đăng nhập', 'Quyền hạn', 'Trạng thái'];
+    const rows = this.filteredUsers().map((u) => [
+      u.fullName,
+      u.email,
+      u.phoneNumber ?? '',
+      u.department ?? '',
+      u.position ?? '',
+      u.username,
+      (u.roles ?? []).join('/'),
+      u.isActive ? 'Hoạt động' : 'Đã khóa',
+    ]);
+
+    const escapeCsv = (v: string) => `"${v.replace(/"/g, '""')}"`;
+    const csv = [headers, ...rows].map((row) => row.map(escapeCsv).join(',')).join('\r\n');
+    const blob = new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    const stamp = new Date().toISOString().slice(0, 10);
+    link.href = url;
+    link.download = `nguoi-dung-${stamp}.csv`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
   }
 }

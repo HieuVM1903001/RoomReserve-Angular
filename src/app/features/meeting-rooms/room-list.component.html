@@ -10,8 +10,52 @@
     </button>
   </div>
 
+  <!-- Mini bento stats -->
+  <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-stack-md mb-8">
+    <div class="glass-card p-4 rounded-xl flex items-center gap-4">
+      <div class="w-12 h-12 rounded-lg bg-primary-container/20 text-primary flex items-center justify-center">
+        <span class="material-symbols-outlined">meeting_room</span>
+      </div>
+      <div>
+        <p class="text-label-sm font-label-sm text-on-surface-variant">Tổng số phòng</p>
+        <p class="text-headline-sm font-headline-sm font-bold">{{ rooms().length }}</p>
+      </div>
+    </div>
+    <div class="glass-card p-4 rounded-xl flex items-center gap-4">
+      <div class="w-12 h-12 rounded-lg bg-status-approved/20 text-status-approved flex items-center justify-center">
+        <span class="material-symbols-outlined">check_circle</span>
+      </div>
+      <div>
+        <p class="text-label-sm font-label-sm text-on-surface-variant">Hoạt động</p>
+        <p class="text-headline-sm font-headline-sm font-bold">{{ activeCount() }}</p>
+      </div>
+    </div>
+    <div class="glass-card p-4 rounded-xl flex items-center gap-4">
+      <div class="w-12 h-12 rounded-lg bg-status-pending/20 text-status-pending flex items-center justify-center">
+        <span class="material-symbols-outlined">build</span>
+      </div>
+      <div>
+        <p class="text-label-sm font-label-sm text-on-surface-variant">Bảo trì</p>
+        <p class="text-headline-sm font-headline-sm font-bold">{{ maintenanceCount() }}</p>
+      </div>
+    </div>
+    <div class="glass-card p-4 rounded-xl flex items-center gap-4">
+      <div class="w-12 h-12 rounded-lg bg-secondary-container/20 text-secondary flex items-center justify-center">
+        <span class="material-symbols-outlined">groups</span>
+      </div>
+      <div>
+        <p class="text-label-sm font-label-sm text-on-surface-variant">Sức chứa tổng</p>
+        <p class="text-headline-sm font-headline-sm font-bold">{{ totalCapacity() }}</p>
+      </div>
+    </div>
+  </div>
+
   <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-gutter">
-    <div *ngFor="let room of rooms()" class="bg-surface-container-lowest border border-surface-border rounded-xl p-6 shadow-sm flex flex-col">
+    <div
+      *ngFor="let room of rooms()"
+      class="bg-surface-container-lowest border rounded-xl p-6 shadow-sm flex flex-col hover:shadow-md transition-shadow"
+      [ngClass]="room.id === highlightId() ? 'border-primary ring-2 ring-primary/30' : 'border-surface-border'"
+    >
       <div class="flex items-start justify-between mb-3">
         <div>
           <p class="font-headline-sm text-headline-sm text-on-surface">{{ room.name }}</p>

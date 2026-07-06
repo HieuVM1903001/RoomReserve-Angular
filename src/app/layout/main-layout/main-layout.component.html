@@ -15,17 +15,7 @@
       </div>
     </div>
 
-    <div class="px-4 mt-2">
-      <button
-        (click)="goToNewBooking()"
-        class="w-full py-3 bg-primary text-white rounded-xl font-label-md text-label-md flex items-center justify-center gap-2 shadow-md hover:opacity-90 active:scale-[0.98] transition-all"
-      >
-        <span class="material-symbols-outlined text-[20px]">add_circle</span>
-        Tạo lịch đặt phòng
-      </button>
-    </div>
-
-    <nav class="flex-1 px-3 mt-6 space-y-1 overflow-y-auto custom-scrollbar">
+    <nav class="flex-1 px-3 mt-2 space-y-1 overflow-y-auto custom-scrollbar">
       <a
         *ngFor="let item of visibleNavItems"
         [routerLink]="item.path"
@@ -37,6 +27,17 @@
         <span>{{ item.label }}</span>
       </a>
     </nav>
+
+    <!-- Single entry point for creating a booking, positioned just above the footer -->
+    <div class="px-4 pb-2">
+      <button
+        (click)="goToNewBooking()"
+        class="w-full py-3 bg-primary text-white rounded-xl font-label-md text-label-md flex items-center justify-center gap-2 shadow-md hover:opacity-90 active:scale-[0.98] transition-all"
+      >
+        <span class="material-symbols-outlined text-[20px]">add_circle</span>
+        Tạo lịch đặt phòng
+      </button>
+    </div>
 
     <div class="p-4 border-t border-surface-border">
       <a
@@ -57,6 +58,43 @@
         <button (click)="toggleSidebar()" class="md:hidden p-2 hover:bg-surface-container-low rounded-full">
           <span class="material-symbols-outlined">menu</span>
         </button>
+        <div class="relative group hidden sm:block">
+          <span class="absolute inset-y-0 left-0 pl-3 flex items-center text-on-surface-variant">
+            <span class="material-symbols-outlined text-[20px]">search</span>
+          </span>
+          <input
+            [ngModel]="searchQuery()"
+            (ngModelChange)="searchQuery.set($event)"
+            (focus)="searchFocused.set(true)"
+            (blur)="onSearchBlur()"
+            class="pl-10 pr-4 py-2 bg-surface-container-low border-none rounded-full text-body-md focus:ring-2 focus:ring-primary/20 w-64 transition-all"
+            placeholder="Tìm kiếm phòng, sự kiện..."
+            type="text"
+          />
+          <!-- Results dropdown -->
+          <div
+            *ngIf="searchFocused() && searchQuery().trim() && searchResults().length > 0"
+            class="absolute top-full left-0 mt-2 w-80 bg-surface-container-lowest border border-surface-border rounded-xl shadow-xl overflow-hidden z-50"
+          >
+            <button
+              *ngFor="let result of searchResults()"
+              (click)="selectResult(result)"
+              class="w-full flex items-center gap-3 px-4 py-3 hover:bg-surface-container-low text-left transition-colors border-b border-surface-border last:border-0"
+            >
+              <span class="material-symbols-outlined text-on-surface-variant text-[20px]">{{ result.type === 'room' ? 'meeting_room' : 'event' }}</span>
+              <div class="min-w-0">
+                <p class="font-label-md text-label-md text-on-surface truncate">{{ result.title }}</p>
+                <p class="text-label-sm text-on-surface-variant truncate">{{ result.subtitle }}</p>
+              </div>
+            </button>
+          </div>
+          <div
+            *ngIf="searchFocused() && searchQuery().trim() && searchResults().length === 0"
+            class="absolute top-full left-0 mt-2 w-80 bg-surface-container-lowest border border-surface-border rounded-xl shadow-xl px-4 py-3 text-body-md text-on-surface-variant z-50"
+          >
+            Không tìm thấy phòng hoặc sự kiện phù hợp.
+          </div>
+        </div>
       </div>
       <div class="flex items-center gap-4">
         <div class="h-8 w-[1px] bg-surface-border mx-2 hidden md:block"></div>

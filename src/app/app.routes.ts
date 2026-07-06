@@ -18,9 +18,11 @@ export const routes: Routes = [
         loadComponent: () => import('./features/dashboard/dashboard.component').then((m) => m.DashboardComponent),
       },
       {
+        // Merged screen: shows the user's own bookings, or — for Admin/Approver —
+        // every booking in the company with approve/reject actions.
         path: 'bookings',
         loadComponent: () =>
-          import('./features/bookings/booking-list/booking-list.component').then((m) => m.BookingListComponent),
+          import('./features/bookings/booking-workspace/booking-workspace.component').then((m) => m.BookingWorkspaceComponent),
       },
       {
         path: 'bookings/new',
@@ -32,12 +34,8 @@ export const routes: Routes = [
         loadComponent: () =>
           import('./features/bookings/booking-form/booking-form.component').then((m) => m.BookingFormComponent),
       },
-      {
-        path: 'booking-approvals',
-        loadComponent: () =>
-          import('./features/booking-approvals/approval-list.component').then((m) => m.ApprovalListComponent),
-        canActivate: [roleGuard(['ADMIN', 'APPROVER'])],
-      },
+      // Old link kept working — redirects into the merged screen.
+      { path: 'booking-approvals', redirectTo: 'bookings', pathMatch: 'full' },
       {
         path: 'meeting-rooms',
         loadComponent: () =>

@@ -1,57 +1,126 @@
 <div class="animate-fade-in">
-  <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
+  <div class="flex flex-col md:flex-row md:items-end justify-between gap-stack-md mb-6">
     <div>
       <h1 class="font-headline-md text-headline-md text-on-surface">Đặt lịch của tôi</h1>
       <p class="text-on-surface-variant mt-1">Theo dõi, chỉnh sửa và hủy các lịch đặt phòng họp của bạn.</p>
     </div>
-    <!-- <button (click)="goToNew()" class="bg-primary text-on-primary px-5 py-3 rounded-xl font-label-md text-label-md flex items-center gap-2 shadow-sm hover:opacity-90 transition-opacity">
-      <span class="material-symbols-outlined text-[20px]">add_circle</span>
-      Tạo lịch đặt phòng
-    </button> -->
+    <div class="flex gap-stack-sm">
+      <button (click)="exportReport()" class="flex items-center gap-2 px-4 py-2 border border-outline-variant rounded-lg font-label-md text-label-md hover:bg-surface-container transition-colors">
+        <span class="material-symbols-outlined text-[20px]">file_download</span>
+        Xuất báo cáo
+      </button>
+    </div>
+  </div>
+
+  <!-- Stats bar -->
+  <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-stack-md mb-6">
+    <div class="glass-panel p-stack-md rounded-xl flex items-center gap-4">
+      <div class="w-12 h-12 bg-status-pending/10 rounded-lg flex items-center justify-center text-status-pending">
+        <span class="material-symbols-outlined text-[28px]">pending_actions</span>
+      </div>
+      <div>
+        <p class="text-label-sm font-label-sm text-on-surface-variant">Đang chờ</p>
+        <p class="text-headline-sm font-headline-sm font-bold">{{ pendingCount() }}</p>
+      </div>
+    </div>
+    <div class="glass-panel p-stack-md rounded-xl flex items-center gap-4">
+      <div class="w-12 h-12 bg-status-approved/10 rounded-lg flex items-center justify-center text-status-approved">
+        <span class="material-symbols-outlined text-[28px]">task_alt</span>
+      </div>
+      <div>
+        <p class="text-label-sm font-label-sm text-on-surface-variant">Đã duyệt</p>
+        <p class="text-headline-sm font-headline-sm font-bold">{{ approvedCount() }}</p>
+      </div>
+    </div>
+    <div class="glass-panel p-stack-md rounded-xl flex items-center gap-4">
+      <div class="w-12 h-12 bg-status-rejected/10 rounded-lg flex items-center justify-center text-status-rejected">
+        <span class="material-symbols-outlined text-[28px]">cancel</span>
+      </div>
+      <div>
+        <p class="text-label-sm font-label-sm text-on-surface-variant">Từ chối</p>
+        <p class="text-headline-sm font-headline-sm font-bold">{{ rejectedCount() }}</p>
+      </div>
+    </div>
+    <div class="glass-panel p-stack-md rounded-xl flex items-center gap-4">
+      <div class="w-12 h-12 bg-secondary-container/20 rounded-lg flex items-center justify-center text-secondary">
+        <span class="material-symbols-outlined text-[28px]">groups</span>
+      </div>
+      <div>
+        <p class="text-label-sm font-label-sm text-on-surface-variant">Tổng người tham gia</p>
+        <p class="text-headline-sm font-headline-sm font-bold">{{ totalParticipants() }}</p>
+      </div>
+    </div>
   </div>
 
   <div class="bg-surface-container-lowest border border-surface-border rounded-xl shadow-sm overflow-hidden">
-    <div class="p-4 border-b border-surface-border flex gap-3 items-center">
-      <label class="text-label-md font-label-md text-on-surface-variant">Trạng thái:</label>
-      <select [(ngModel)]="statusFilter" (change)="load()" class="px-3 py-2 border border-surface-border rounded-lg text-body-md">
-        <option value="">Tất cả</option>
-        <option value="PENDING">Chờ phê duyệt</option>
-        <option value="APPROVED">Đã phê duyệt</option>
-        <option value="REJECTED">Đã từ chối</option>
-        <option value="CANCELLED">Đã hủy</option>
-        <option value="COMPLETED">Đã hoàn thành</option>
-      </select>
+    <!-- Filters -->
+    <div class="p-4 border-b border-surface-border flex flex-wrap gap-3 items-center">
+      <div class="flex items-center gap-2">
+        <span class="font-label-md text-label-md text-on-surface-variant">Trạng thái:</span>
+        <select [(ngModel)]="statusFilter" (change)="load()" class="px-3 py-2 border border-surface-border rounded-lg text-body-md">
+          <option value="">Tất cả</option>
+          <option value="PENDING">Chờ phê duyệt</option>
+          <option value="APPROVED">Đã phê duyệt</option>
+          <option value="REJECTED">Đã từ chối</option>
+          <option value="CANCELLED">Đã hủy</option>
+          <option value="COMPLETED">Đã hoàn thành</option>
+        </select>
+      </div>
+      <div class="flex items-center gap-2">
+        <span class="font-label-md text-label-md text-on-surface-variant">Phòng:</span>
+        <select [(ngModel)]="roomFilter" (change)="load()" class="px-3 py-2 border border-surface-border rounded-lg text-body-md">
+          <option value="">Tất cả phòng</option>
+          <option *ngFor="let r of rooms()" [value]="r.id">{{ r.name }}</option>
+        </select>
+      </div>
+      <div class="flex items-center gap-2">
+        <span class="font-label-md text-label-md text-on-surface-variant">Ngày:</span>
+        <input type="date" [(ngModel)]="dateFilter" (change)="load()" class="px-3 py-2 border border-surface-border rounded-lg text-body-md" />
+      </div>
+      <button (click)="resetFilters()" class="ml-auto text-primary font-label-md text-label-md hover:underline">Làm mới bộ lọc</button>
     </div>
 
     <div class="overflow-x-auto">
-      <table class="w-full text-left">
-        <thead class="bg-surface-container-low text-on-surface-variant text-label-sm">
-          <tr>
-            <th class="px-4 py-3">Tiêu đề</th>
-            <th class="px-4 py-3">Phòng họp</th>
-            <th class="px-4 py-3">Thời gian</th>
-            <th class="px-4 py-3">Số người</th>
-            <th class="px-4 py-3">Trạng thái</th>
-            <th class="px-4 py-3 text-right">Thao tác</th>
+      <table class="w-full text-left border-collapse">
+        <thead>
+          <tr class="bg-surface-container-low text-on-surface-variant text-label-sm border-b border-surface-border">
+            <th class="px-6 py-4 font-label-md text-label-md">Người đặt</th>
+            <th class="px-6 py-4 font-label-md text-label-md">Tiêu đề</th>
+            <th class="px-6 py-4 font-label-md text-label-md">Phòng họp</th>
+            <th class="px-6 py-4 font-label-md text-label-md">Thời gian</th>
+            <th class="px-6 py-4 font-label-md text-label-md">Số người</th>
+            <th class="px-6 py-4 font-label-md text-label-md">Trạng thái</th>
+            <th class="px-6 py-4 font-label-md text-label-md text-right">Thao tác</th>
           </tr>
         </thead>
         <tbody class="divide-y divide-surface-border">
-          <tr *ngFor="let b of bookings()" class="hover:bg-surface-container-low/50 transition-colors">
-            <td class="px-4 py-3">
+          <tr *ngFor="let b of bookings()" class="hover:bg-surface-container-low/50 transition-colors group">
+            <td class="px-6 py-4">
+              <div class="flex items-center gap-3">
+                <div class="w-8 h-8 rounded-full bg-primary-container/20 flex items-center justify-center text-primary font-bold text-xs shrink-0">
+                  {{ (b.createdByUserName || '?').charAt(0) }}
+                </div>
+                <span class="font-label-md text-label-md text-on-surface">{{ b.createdByUserName }}</span>
+              </div>
+            </td>
+            <td class="px-6 py-4">
               <button (click)="viewDetail(b)" class="font-label-md text-label-md text-primary hover:underline text-left">{{ b.title }}</button>
             </td>
-            <td class="px-4 py-3 text-body-md text-on-surface-variant">{{ b.roomName }}</td>
-            <td class="px-4 py-3 text-body-md text-on-surface-variant">{{ b.startTime | date:'short' }} – {{ b.endTime | date:'shortTime' }}</td>
-            <td class="px-4 py-3 text-body-md text-on-surface-variant">{{ b.numberOfParticipants }}</td>
-            <td class="px-4 py-3">
+            <td class="px-6 py-4 text-body-md text-on-surface-variant">{{ b.roomName }}</td>
+            <td class="px-6 py-4 text-body-md text-on-surface-variant">
+              <p>{{ b.startTime | date:'shortDate' }}</p>
+              <p class="text-label-sm">{{ b.startTime | date:'shortTime' }} – {{ b.endTime | date:'shortTime' }}</p>
+            </td>
+            <td class="px-6 py-4 text-body-md text-on-surface-variant">{{ b.numberOfParticipants }}</td>
+            <td class="px-6 py-4">
               <span class="badge" [ngClass]="'badge-' + b.status.toLowerCase()">{{ statusLabel(b.status) }}</span>
             </td>
-            <td class="px-4 py-3">
-              <div class="flex justify-end gap-2">
-                <button *ngIf="canEdit(b)" (click)="goToEdit(b)" title="Sửa" class="p-2 hover:bg-surface-container-low rounded-full text-on-surface-variant">
+            <td class="px-6 py-4">
+              <div class="flex justify-end gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                <button *ngIf="canEdit(b)" (click)="goToEdit(b)" title="Sửa" class="p-2 hover:bg-primary/10 rounded-lg text-primary">
                   <span class="material-symbols-outlined text-[20px]">edit</span>
                 </button>
-                <button *ngIf="canCancel(b)" (click)="openCancel(b)" title="Hủy lịch" class="p-2 hover:bg-surface-container-low rounded-full text-status-rejected">
+                <button *ngIf="canCancel(b)" (click)="openCancel(b)" title="Hủy lịch" class="p-2 hover:bg-error-container/20 rounded-lg text-status-rejected">
                   <span class="material-symbols-outlined text-[20px]">cancel</span>
                 </button>
               </div>
@@ -72,6 +141,7 @@
         <span class="badge" [ngClass]="'badge-' + b.status.toLowerCase()">{{ statusLabel(b.status) }}</span>
       </div>
       <div class="space-y-2 text-body-md">
+        <p><span class="text-on-surface-variant">Người đặt:</span> {{ b.createdByUserName }}</p>
         <p><span class="text-on-surface-variant">Phòng họp:</span> {{ b.roomName }} ({{ b.roomLocation }})</p>
         <p><span class="text-on-surface-variant">Thời gian:</span> {{ b.startTime | date:'medium' }} - {{ b.endTime | date:'shortTime' }}</p>
         <p><span class="text-on-surface-variant">Số người tham gia:</span> {{ b.numberOfParticipants }}</p>

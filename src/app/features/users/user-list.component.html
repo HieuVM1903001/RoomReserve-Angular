@@ -1,17 +1,69 @@
 <div class="animate-fade-in">
-  <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
+  <div class="flex flex-col md:flex-row md:items-end justify-between gap-4 mb-6">
     <div>
+      <nav class="flex items-center gap-2 text-label-sm font-label-sm text-on-surface-variant mb-2">
+        <span>Hệ thống</span>
+        <span class="material-symbols-outlined text-[14px]">chevron_right</span>
+        <span class="text-primary">Quản lý người dùng</span>
+      </nav>
       <h1 class="font-headline-md text-headline-md text-on-surface">Quản lý người dùng</h1>
       <p class="text-on-surface-variant mt-1">Quản lý tài khoản, phân quyền và trạng thái người dùng.</p>
     </div>
-    <button (click)="openCreate()" class="bg-primary text-on-primary px-5 py-3 rounded-xl font-label-md text-label-md flex items-center gap-2 shadow-sm hover:opacity-90 transition-opacity">
-      <span class="material-symbols-outlined text-[20px]">person_add</span>
-      Thêm người dùng
-    </button>
+    <div class="flex items-center gap-3">
+      <button (click)="exportReport()" class="flex items-center gap-2 px-4 py-2.5 bg-surface-container-high text-on-surface rounded-lg font-label-md text-label-md hover:bg-surface-container-highest transition-all">
+        <span class="material-symbols-outlined text-[18px]">file_download</span>
+        Xuất báo cáo
+      </button>
+      <button (click)="openCreate()" class="flex items-center gap-2 px-6 py-2.5 bg-primary text-white rounded-lg font-label-md text-label-md shadow-lg shadow-primary/20 hover:scale-[1.02] active:scale-[0.98] transition-all">
+        <span class="material-symbols-outlined text-[18px]">person_add</span>
+        Thêm người dùng
+      </button>
+    </div>
+  </div>
+
+  <!-- Bento stats -->
+  <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+    <div class="bg-surface-container-lowest p-6 rounded-xl border border-surface-border shadow-sm flex items-center gap-4">
+      <div class="w-12 h-12 rounded-lg bg-primary-container/10 flex items-center justify-center text-primary">
+        <span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">groups</span>
+      </div>
+      <div>
+        <p class="text-label-sm font-label-sm text-on-surface-variant uppercase">Tổng người dùng</p>
+        <p class="font-headline-md text-headline-md text-on-surface">{{ users().length }}</p>
+      </div>
+    </div>
+    <div class="bg-surface-container-lowest p-6 rounded-xl border border-surface-border shadow-sm flex items-center gap-4">
+      <div class="w-12 h-12 rounded-lg bg-status-approved/10 flex items-center justify-center text-status-approved">
+        <span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">person_check</span>
+      </div>
+      <div>
+        <p class="text-label-sm font-label-sm text-on-surface-variant uppercase">Đang hoạt động</p>
+        <p class="font-headline-md text-headline-md text-on-surface">{{ activeCount() }}</p>
+      </div>
+    </div>
+    <div class="bg-surface-container-lowest p-6 rounded-xl border border-surface-border shadow-sm flex items-center gap-4">
+      <div class="w-12 h-12 rounded-lg bg-status-pending/10 flex items-center justify-center text-status-pending">
+        <span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">admin_panel_settings</span>
+      </div>
+      <div>
+        <p class="text-label-sm font-label-sm text-on-surface-variant uppercase">Quản trị viên</p>
+        <p class="font-headline-md text-headline-md text-on-surface">{{ adminCount() }}</p>
+      </div>
+    </div>
+    <div class="bg-surface-container-lowest p-6 rounded-xl border border-surface-border shadow-sm flex items-center gap-4">
+      <div class="w-12 h-12 rounded-lg bg-status-rejected/10 flex items-center justify-center text-status-rejected">
+        <span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">person_off</span>
+      </div>
+      <div>
+        <p class="text-label-sm font-label-sm text-on-surface-variant uppercase">Đã khóa</p>
+        <p class="font-headline-md text-headline-md text-on-surface">{{ lockedCount() }}</p>
+      </div>
+    </div>
   </div>
 
   <div class="bg-surface-container-lowest border border-surface-border rounded-xl shadow-sm overflow-hidden">
-    <div class="p-4 border-b border-surface-border flex gap-3">
+    <!-- Filters -->
+    <div class="p-4 border-b border-surface-border flex flex-wrap items-center gap-3">
       <div class="relative flex-1 max-w-md">
         <span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-outline">search</span>
         <input
@@ -22,45 +74,61 @@
           class="w-full pl-10 pr-4 py-2 bg-surface-container-low border-none rounded-full text-body-md focus:ring-2 focus:ring-primary/20"
         />
       </div>
+      <select [(ngModel)]="roleFilter" class="bg-surface border border-surface-border rounded-lg text-body-md px-3 py-2 focus:ring-primary/20">
+        <option value="">Tất cả quyền hạn</option>
+        <option *ngFor="let r of roles()" [value]="r.code">{{ r.name }}</option>
+      </select>
+      <select [(ngModel)]="departmentFilter" class="bg-surface border border-surface-border rounded-lg text-body-md px-3 py-2 focus:ring-primary/20">
+        <option value="">Tất cả phòng ban</option>
+        <option *ngFor="let d of departments()" [value]="d">{{ d }}</option>
+      </select>
       <button (click)="loadUsers()" class="px-4 py-2 bg-surface-container rounded-full text-label-md font-label-md hover:bg-surface-container-high">Tìm kiếm</button>
+      <button (click)="resetFilters()" class="ml-auto text-primary font-label-md text-label-md hover:underline">Làm mới bộ lọc</button>
     </div>
 
     <div class="overflow-x-auto">
-      <table class="w-full text-left">
-        <thead class="bg-surface-container-low text-on-surface-variant text-label-sm">
-          <tr>
-            <th class="px-4 py-3">Họ tên</th>
-            <th class="px-4 py-3">Email</th>
-            <th class="px-4 py-3">Phòng ban</th>
-            <th class="px-4 py-3">Chức vụ</th>
-            <th class="px-4 py-3">Vai trò</th>
-            <th class="px-4 py-3">Trạng thái</th>
-            <th class="px-4 py-3 text-right">Thao tác</th>
+      <table class="w-full text-left border-collapse">
+        <thead>
+          <tr class="bg-surface-container-low text-on-surface-variant text-label-sm border-b border-surface-border">
+            <th class="px-6 py-4 font-label-md text-label-md">Họ tên</th>
+            <th class="px-6 py-4 font-label-md text-label-md">Email</th>
+            <th class="px-6 py-4 font-label-md text-label-md">Phòng ban</th>
+            <th class="px-6 py-4 font-label-md text-label-md">Chức vụ</th>
+            <th class="px-6 py-4 font-label-md text-label-md">Quyền hạn</th>
+            <th class="px-6 py-4 font-label-md text-label-md">Trạng thái</th>
+            <th class="px-6 py-4 font-label-md text-label-md text-right">Thao tác</th>
           </tr>
         </thead>
         <tbody class="divide-y divide-surface-border">
-          <tr *ngFor="let user of users()" class="hover:bg-surface-container-low/50 transition-colors">
-            <td class="px-4 py-3 font-label-md text-label-md">{{ user.fullName }}</td>
-            <td class="px-4 py-3 text-body-md text-on-surface-variant">{{ user.email }}</td>
-            <td class="px-4 py-3 text-body-md text-on-surface-variant">{{ user.department }}</td>
-            <td class="px-4 py-3 text-body-md text-on-surface-variant">{{ user.position }}</td>
-            <td class="px-4 py-3">
-              <span *ngFor="let r of user.roles" class="badge badge-approved mr-1">{{ r.code }}</span>
+          <tr *ngFor="let user of filteredUsers()" class="hover:bg-surface-container-low/50 transition-colors group" [class.opacity-60]="!user.isActive">
+            <td class="px-6 py-4">
+              <div class="flex items-center gap-3">
+                <div class="w-9 h-9 rounded-full bg-primary-container/20 flex items-center justify-center text-primary font-bold text-label-md shrink-0">
+                  {{ user.fullName.charAt(0) }}
+                </div>
+                <span class="font-label-md text-label-md text-on-surface">{{ user.fullName }}</span>
+              </div>
             </td>
-            <td class="px-4 py-3">
+            <td class="px-6 py-4 text-body-md text-on-surface-variant">{{ user.email }}</td>
+            <td class="px-6 py-4 text-body-md text-on-surface-variant">{{ user.department }}</td>
+            <td class="px-6 py-4 text-body-md text-on-surface-variant">{{ user.position }}</td>
+            <td class="px-6 py-4">
+              <span *ngFor="let r of user.roles" class="badge badge-approved mr-1">{{ r }}</span>
+            </td>
+            <td class="px-6 py-4">
               <span class="badge" [ngClass]="user.isActive ? 'badge-approved' : 'badge-cancelled'">
                 {{ user.isActive ? 'Hoạt động' : 'Đã khóa' }}
               </span>
             </td>
-            <td class="px-4 py-3">
-              <div class="flex justify-end gap-2">
-                <button (click)="openRoleModal(user)" title="Phân quyền" class="p-2 hover:bg-surface-container-low rounded-full text-on-surface-variant">
+            <td class="px-6 py-4">
+              <div class="flex justify-end gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                <button (click)="openRoleModal(user)" title="Phân quyền" class="p-2 hover:bg-primary/10 rounded-lg text-primary">
                   <span class="material-symbols-outlined text-[20px]">admin_panel_settings</span>
                 </button>
-                <button (click)="openEdit(user)" title="Sửa" class="p-2 hover:bg-surface-container-low rounded-full text-on-surface-variant">
+                <button (click)="openEdit(user)" title="Sửa" class="p-2 hover:bg-primary/10 rounded-lg text-primary">
                   <span class="material-symbols-outlined text-[20px]">edit</span>
                 </button>
-                <button (click)="toggleLock(user)" [title]="user.isActive ? 'Khóa' : 'Mở khóa'" class="p-2 hover:bg-surface-container-low rounded-full" [ngClass]="user.isActive ? 'text-status-rejected' : 'text-status-approved'">
+                <button (click)="toggleLock(user)" [title]="user.isActive ? 'Khóa' : 'Mở khóa'" class="p-2 rounded-lg" [ngClass]="user.isActive ? 'hover:bg-error-container/20 text-status-rejected' : 'hover:bg-status-approved/10 text-status-approved'">
                   <span class="material-symbols-outlined text-[20px]">{{ user.isActive ? 'lock' : 'lock_open' }}</span>
                 </button>
               </div>
@@ -68,7 +136,7 @@
           </tr>
         </tbody>
       </table>
-      <div *ngIf="!loading() && users().length === 0" class="text-center py-10 text-on-surface-variant">Không tìm thấy người dùng nào.</div>
+      <div *ngIf="!loading() && filteredUsers().length === 0" class="text-center py-10 text-on-surface-variant">Không tìm thấy người dùng nào.</div>
     </div>
   </div>
 </div>

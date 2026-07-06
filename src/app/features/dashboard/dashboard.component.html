@@ -1,66 +1,200 @@
 <div class="animate-fade-in">
-  <div class="mb-8">
-    <h1 class="font-headline-md text-headline-md text-on-surface">Xin chào, {{ auth.currentUser()?.fullName }} 👋</h1>
-    <p class="text-on-surface-variant mt-1">Đây là tổng quan hoạt động đặt phòng họp của bạn hôm nay.</p>
+  <!-- Quick Stats Bento Grid -->
+  <div class="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-stack-lg mb-stack-lg">
+    <!-- Stat Card 1: Tổng số phòng -->
+    <div class="bg-surface-container-lowest p-6 rounded-2xl shadow-sm border border-surface-border/50 flex flex-col justify-between group hover:shadow-md transition-shadow">
+      <div class="flex justify-between items-start mb-4">
+        <div class="p-3 bg-primary-container/10 rounded-xl">
+          <span class="material-symbols-outlined text-primary">meeting_room</span>
+        </div>
+        <span class="text-status-approved text-label-sm bg-status-approved/10 px-2 py-1 rounded-full">{{ activeRoomsCount }} hoạt động</span>
+      </div>
+      <div>
+        <p class="text-on-surface-variant font-label-md text-label-md">Tổng số phòng</p>
+        <h3 class="text-headline-md font-headline-md text-primary mt-1">{{ rooms().length }}</h3>
+      </div>
+    </div>
+
+    <!-- Stat Card 2: Lịch đặt hôm nay -->
+    <div class="bg-surface-container-lowest p-6 rounded-2xl shadow-sm border border-surface-border/50 flex flex-col justify-between group hover:shadow-md transition-shadow">
+      <div class="flex justify-between items-start mb-4">
+        <div class="p-3 bg-secondary-container/20 rounded-xl">
+          <span class="material-symbols-outlined text-secondary">today</span>
+        </div>
+        <span class="text-on-surface-variant text-label-sm opacity-60">{{ formattedSelectedDate }}</span>
+      </div>
+      <div>
+        <p class="text-on-surface-variant font-label-md text-label-md">Lịch đặt {{ isToday ? 'hôm nay' : 'trong ngày' }}</p>
+        <h3 class="text-headline-md font-headline-md text-on-surface mt-1">{{ todayBookingsCount() }}</h3>
+      </div>
+    </div>
+
+    <!-- Stat Card 3: Đang chờ duyệt -->
+    <div class="bg-surface-container-lowest p-6 rounded-2xl shadow-sm border border-surface-border/50 flex flex-col justify-between group hover:shadow-md transition-shadow">
+      <div class="flex justify-between items-start mb-4">
+        <div class="p-3 bg-status-pending/10 rounded-xl">
+          <span class="material-symbols-outlined text-status-pending">pending_actions</span>
+        </div>
+        <div *ngIf="pendingCardCount > 0" class="animate-pulse bg-status-pending h-2 w-2 rounded-full"></div>
+      </div>
+      <div>
+        <p class="text-on-surface-variant font-label-md text-label-md">Đang chờ duyệt</p>
+        <h3 class="text-headline-md font-headline-md text-on-surface mt-1">{{ pendingCardCount.toString().padStart(2, '0') }}</h3>
+      </div>
+    </div>
+
+    <!-- Stat Card 4: Công suất sử dụng -->
+    <div class="bg-primary p-6 rounded-2xl shadow-lg flex flex-col justify-between text-on-primary relative overflow-hidden">
+      <div class="relative z-10">
+        <p class="font-label-md text-label-md opacity-80">Công suất sử dụng</p>
+        <h3 class="text-headline-md font-headline-md mt-1">{{ roomUtilizationPercent }}%</h3>
+      </div>
+      <div class="relative z-10 flex items-center gap-2 mt-4">
+        <div class="flex-1 bg-white/20 h-2 rounded-full">
+          <div class="bg-white h-full rounded-full transition-all duration-700" [style.width.%]="roomUtilizationPercent"></div>
+        </div>
+      </div>
+    </div>
   </div>
 
-  <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-gutter mb-8">
-    <div class="bg-surface-container-lowest border border-surface-border rounded-xl p-6 shadow-sm">
-      <div class="flex items-center justify-between">
-        <p class="text-on-surface-variant text-body-md">Lịch chờ duyệt</p>
-        <span class="material-symbols-outlined text-status-pending">hourglass_top</span>
-      </div>
-      <p class="text-headline-lg font-headline-lg text-on-surface mt-2">{{ pendingCount }}</p>
-    </div>
-    <div class="bg-surface-container-lowest border border-surface-border rounded-xl p-6 shadow-sm">
-      <div class="flex items-center justify-between">
-        <p class="text-on-surface-variant text-body-md">Lịch đã duyệt</p>
-        <span class="material-symbols-outlined text-status-approved">event_available</span>
-      </div>
-      <p class="text-headline-lg font-headline-lg text-on-surface mt-2">{{ approvedCount }}</p>
-    </div>
-    <div class="bg-surface-container-lowest border border-surface-border rounded-xl p-6 shadow-sm">
-      <div class="flex items-center justify-between">
-        <p class="text-on-surface-variant text-body-md">Phòng đang hoạt động</p>
-        <span class="material-symbols-outlined text-primary">meeting_room</span>
-      </div>
-      <p class="text-headline-lg font-headline-lg text-on-surface mt-2">{{ activeRoomsCount }} / {{ rooms().length }}</p>
-    </div>
-  </div>
-
-  <div class="grid grid-cols-1 lg:grid-cols-2 gap-gutter">
-    <div class="bg-surface-container-lowest border border-surface-border rounded-xl p-6 shadow-sm">
-      <div class="flex items-center justify-between mb-4">
-        <h2 class="font-headline-sm text-headline-sm">Lịch đặt gần đây của tôi</h2>
-        <a routerLink="/bookings" class="text-primary text-label-md font-label-md hover:underline">Xem tất cả</a>
-      </div>
-      <div *ngIf="!loading() && myBookings().length === 0" class="text-on-surface-variant text-body-md py-6 text-center">
-        Bạn chưa có lịch đặt phòng nào.
-      </div>
-      <div *ngFor="let b of myBookings()" class="flex items-center justify-between py-3 border-b border-surface-border last:border-0">
-        <div>
-          <p class="font-label-md text-label-md text-on-surface">{{ b.title }}</p>
-          <p class="text-body-md text-on-surface-variant text-sm">{{ b.roomName }} · {{ b.startTime | date:'short' }}</p>
+  <!-- Main Workspace Layout -->
+  <div class="grid grid-cols-12 gap-stack-lg">
+    <!-- Calendar Section -->
+    <div class="col-span-12 lg:col-span-8 bg-surface-container-lowest rounded-3xl shadow-sm border border-surface-border/50 overflow-hidden flex flex-col">
+      <div class="p-6 border-b border-surface-border flex flex-wrap justify-between items-center gap-3 bg-surface-bright">
+        <div class="flex items-center gap-4">
+          <h2 class="font-headline-sm text-headline-sm text-on-surface">Lịch đặt phòng</h2>
+          <div class="flex bg-surface-container-high p-1 rounded-lg">
+            <button class="px-4 py-1.5 text-label-sm font-label-md rounded-md bg-surface-container-lowest shadow-sm text-primary">Ngày</button>
+            <button title="Sắp ra mắt" class="px-4 py-1.5 text-label-sm font-label-md text-on-surface-variant/40 cursor-not-allowed">Tuần</button>
+            <button title="Sắp ra mắt" class="px-4 py-1.5 text-label-sm font-label-md text-on-surface-variant/40 cursor-not-allowed">Tháng</button>
+          </div>
         </div>
-        <span class="badge" [ngClass]="'badge-' + b.status.toLowerCase()">{{ b.status }}</span>
+        <div class="flex items-center gap-2">
+          <button (click)="prevDay()" class="p-2 hover:bg-surface-container-low rounded-lg transition-colors border border-surface-border">
+            <span class="material-symbols-outlined">chevron_left</span>
+          </button>
+          <button (click)="goToday()" class="font-label-md text-label-md px-4 hover:text-primary transition-colors">{{ formattedSelectedDate }}</button>
+          <button (click)="nextDay()" class="p-2 hover:bg-surface-container-low rounded-lg transition-colors border border-surface-border">
+            <span class="material-symbols-outlined">chevron_right</span>
+          </button>
+        </div>
+      </div>
+
+      <div class="flex-1 overflow-x-auto">
+        <div [style.min-width.px]="80 + visibleRooms().length * 160">
+          <!-- Calendar Header Rooms -->
+          <div class="flex border-b border-surface-border bg-surface-container-low/30">
+            <div class="w-20 shrink-0 p-4 border-r border-surface-border"></div>
+            <div class="flex-1 grid" [style.grid-template-columns]="'repeat(' + (visibleRooms().length || 1) + ', 1fr)'">
+              <div *ngFor="let r of visibleRooms()" class="p-4 text-center font-label-md text-label-md text-on-surface-variant border-r border-surface-border truncate">{{ r.name }}</div>
+            </div>
+          </div>
+
+          <!-- Calendar Body -->
+          <div class="flex relative" [style.height.px]="calendarHeightPx">
+            <!-- Time labels -->
+            <div class="w-20 shrink-0 relative border-r border-surface-border">
+              <div
+                *ngFor="let h of hours"
+                class="absolute left-0 right-0 text-right pr-3 text-label-sm text-on-surface-variant font-medium -translate-y-1/2"
+                [style.top.px]="(h - hours[0]) * rowHeight"
+              >
+                {{ h }}:00
+              </div>
+            </div>
+
+            <!-- Room columns -->
+            <div class="relative flex-1 border-b border-surface-border">
+              <!-- hour lines -->
+              <div
+                *ngFor="let h of hours"
+                class="absolute left-0 right-0 border-t border-surface-border"
+                [style.top.px]="(h - hours[0]) * rowHeight"
+              ></div>
+
+              <div class="absolute inset-0 grid" [style.grid-template-columns]="'repeat(' + (visibleRooms().length || 1) + ', 1fr)'">
+                <div *ngFor="let r of visibleRooms()" class="relative border-r border-surface-border h-full hover:bg-surface-container-low/40 transition-colors">
+                  <div
+                    *ngFor="let ev of eventsForRoom(r.id)"
+                    class="absolute inset-x-1 border-l-4 p-2 rounded-r-lg z-10 overflow-hidden"
+                    [ngClass]="eventClasses(ev.booking.status)"
+                    [style.top.px]="ev.topPx"
+                    [style.height.px]="ev.heightPx"
+                    [title]="ev.booking.title + ' · ' + (ev.booking.startTime | date:'shortTime') + ' - ' + (ev.booking.endTime | date:'shortTime')"
+                  >
+                    <p class="text-[10px] font-bold uppercase leading-tight" [ngClass]="eventLabelClasses(ev.booking.status)">{{ statusLabel(ev.booking.status) }}</p>
+                    <p class="text-label-sm font-label-md text-on-surface leading-tight truncate">{{ ev.booking.title }}</p>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Current Time Indicator -->
+              <div
+                *ngIf="currentTimeTopPx() as topPx"
+                class="absolute left-0 right-0 h-[2px] bg-primary z-20 pointer-events-none flex items-center"
+                [style.top.px]="topPx"
+              >
+                <div class="w-3 h-3 bg-primary rounded-full -ml-1.5 shadow-sm"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div *ngIf="!loadingCalendar() && dayBookings().length === 0" class="text-center py-6 text-on-surface-variant text-body-md border-t border-surface-border">
+        Không có lịch đặt phòng nào trong ngày này.
       </div>
     </div>
 
-    <div *ngIf="canApprove" class="bg-surface-container-lowest border border-surface-border rounded-xl p-6 shadow-sm">
-      <div class="flex items-center justify-between mb-4">
-        <h2 class="font-headline-sm text-headline-sm">Yêu cầu đang chờ duyệt</h2>
-        <a routerLink="/booking-approvals" class="text-primary text-label-md font-label-md hover:underline">Xem tất cả</a>
-      </div>
-      <div *ngIf="!loading() && pendingApprovals().length === 0" class="text-on-surface-variant text-body-md py-6 text-center">
-        Không có yêu cầu nào đang chờ duyệt.
-      </div>
-      <div *ngFor="let b of pendingApprovals()" class="flex items-center justify-between py-3 border-b border-surface-border last:border-0">
-        <div>
-          <p class="font-label-md text-label-md text-on-surface">{{ b.title }}</p>
-          <p class="text-body-md text-on-surface-variant text-sm">{{ b.roomName }} · {{ b.createdByUserName }}</p>
+    <!-- Available Rooms Side Panel -->
+    <div class="col-span-12 lg:col-span-4 flex flex-col gap-stack-lg">
+      <div class="bg-surface-container-lowest p-6 rounded-3xl shadow-sm border border-surface-border/50">
+        <div class="flex justify-between items-center mb-6">
+          <h3 class="font-headline-sm text-headline-sm text-on-surface">Phòng họp trống</h3>
+          <a routerLink="/meeting-rooms" class="text-primary font-label-md text-label-md hover:underline decoration-2 underline-offset-4">Xem tất cả</a>
         </div>
-        <span class="badge badge-pending">PENDING</span>
+        <div class="space-y-4">
+          <div *ngFor="let room of availableRoomsNow().slice(0, 3)" class="flex gap-4 p-4 rounded-2xl hover:bg-surface-container transition-colors cursor-pointer group border border-transparent hover:border-surface-border">
+            <div class="w-16 h-16 rounded-xl overflow-hidden shrink-0 bg-primary-container/10 flex items-center justify-center text-primary">
+              <span class="material-symbols-outlined text-[32px]">meeting_room</span>
+            </div>
+            <div class="flex-1 flex flex-col justify-center min-w-0">
+              <div class="flex justify-between gap-2">
+                <h4 class="font-label-md text-label-md text-on-surface truncate">{{ room.name }}</h4>
+                <span class="text-status-approved font-bold text-[10px] uppercase shrink-0">Available</span>
+              </div>
+              <p class="text-body-md text-on-surface-variant opacity-70 truncate">{{ room.location }} · {{ room.capacity }} người</p>
+              <div class="flex items-center gap-2 mt-2">
+                <span *ngFor="let eq of room.equipment.slice(0, 4)" class="material-symbols-outlined text-[16px] text-on-surface-variant" [title]="eq">{{ equipmentIcon(eq) }}</span>
+              </div>
+            </div>
+          </div>
+          <div *ngIf="!loading() && availableRoomsNow().length === 0" class="text-on-surface-variant text-body-md py-6 text-center">
+            Không có phòng trống vào lúc này.
+          </div>
+        </div>
       </div>
+
+      <!-- Upcoming Activities -->
+      <!-- <div class="bg-surface-container-lowest p-6 rounded-3xl shadow-sm border border-surface-border/50 flex-1">
+        <h3 class="font-headline-sm text-headline-sm text-on-surface mb-6">Hoạt động sắp tới</h3>
+        <div *ngIf="!loading() && upcomingActivities().length === 0" class="text-on-surface-variant text-body-md py-6 text-center">
+          Không có hoạt động nào sắp tới.
+        </div>
+        <div class="space-y-6">
+          <div *ngFor="let a of upcomingActivities(); let last = last" class="flex gap-4 relative">
+            <div class="flex flex-col items-center">
+              <div class="w-3 h-3 rounded-full ring-4 ring-primary/10" [ngClass]="statusDotClass(a.status)"></div>
+              <div *ngIf="!last" class="flex-1 w-[1px] bg-surface-border my-1"></div>
+            </div>
+            <div class="pb-2 min-w-0">
+              <p class="text-label-sm font-label-md text-primary">{{ a.startTime | date:'shortTime' }} - {{ a.endTime | date:'shortTime' }}</p>
+              <p class="font-label-md text-label-md text-on-surface mt-1 truncate">{{ a.title }}</p>
+              <p class="text-body-md text-on-surface-variant truncate">{{ a.roomName }}{{ a.status === 'PENDING' ? ' (Pending)' : '' }}</p>
+            </div>
+          </div>
+        </div>
+      </div> -->
     </div>
   </div>
 </div>

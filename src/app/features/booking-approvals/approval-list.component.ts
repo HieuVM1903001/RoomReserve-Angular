@@ -1,4 +1,4 @@
-import { Component, OnInit, signal } from '@angular/core';
+import { Component, OnInit, signal, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { BookingApprovalService } from '../../core/services/booking-approval.service';
@@ -30,9 +30,14 @@ export class ApprovalListComponent implements OnInit {
 
   constructor(private approvalService: BookingApprovalService, private roomService: MeetingRoomService) {}
 
+  // Stats bar (counts reflect the currently loaded/filtered result set)
+  pendingCount = computed(() => this.bookings().filter((b) => b.status === 'PENDING').length);
+  approvedCount = computed(() => this.bookings().filter((b) => b.status === 'APPROVED').length);
+  rejectedCount = computed(() => this.bookings().filter((b) => b.status === 'REJECTED').length);
+  totalParticipants = computed(() => this.bookings().reduce((sum, b) => sum + (b.numberOfParticipants || 0), 0));
+
   ngOnInit(): void {
     this.roomService.getAll().subscribe((rooms) => this.rooms.set(rooms));
-    console.log({bookings: this.bookings()  });
     this.load();
   }
 
@@ -44,7 +49,7 @@ export class ApprovalListComponent implements OnInit {
         roomId: this.roomFilter ? Number(this.roomFilter) : undefined,
         keyword: this.keyword || undefined,
         page: 1,
-        pageSize: 100,
+        pageSize: 99,
       })
       .subscribe({
         next: (res) => {

@@ -1,4 +1,3 @@
-import { Role } from './role.model';
 
 export interface AppUser {
   id: number;
@@ -38,7 +37,6 @@ export interface UserSearchParams {
   department?: string;
   page?: number;
   pageSize?: number;
+  role?: string;
 }
 
-// Re-exported so consumers that only import from user.model still get Role.
-export type { Role };

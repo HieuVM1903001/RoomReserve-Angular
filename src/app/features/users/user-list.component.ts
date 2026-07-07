@@ -46,15 +46,7 @@ export class UserListComponent implements OnInit {
     return Array.from(set).sort();
   });
 
-  filteredUsers = computed<AppUser[]>(() => {
-    const role = this.roleFilter();
-    const dept = this.departmentFilter();
-    return this.users().filter((u) => {
-      const matchesRole = !role || this.hasRole(u, role);
-      const matchesDept = !dept || u.department === dept;
-      return matchesRole && matchesDept;
-    });
-  });
+  filteredUsers = signal<AppUser[]>([])
 
   private fb = inject(FormBuilder);
 
@@ -72,6 +64,7 @@ export class UserListComponent implements OnInit {
 
   ngOnInit(): void {
     this.loadUsers();
+    this.loadAllUsers();
     this.userService.getRoles().subscribe({
       next: (roles) => this.roles.set(roles),
       error: () => this.roles.set([
@@ -81,10 +74,9 @@ export class UserListComponent implements OnInit {
       ]),
     });
   }
-
-  loadUsers(): void {
+  loadAllUsers(): void {
     this.loading.set(true);
-    this.userService.getAll({ keyword: this.keyword(), page: 1, pageSize: 99 }).subscribe({
+    this.userService.getAll({ keyword: this.keyword(), department: this.departmentFilter(), role: this.roleFilter(), page: 1, pageSize: 99 }).subscribe({
       next: (res) => {
         this.users.set(res.items);
         this.loading.set(false);
@@ -93,16 +85,30 @@ export class UserListComponent implements OnInit {
     });
   }
 
+  loadUsers(): void {
+    this.loading.set(true);
+    this.userService.getAll({ keyword: this.keyword(), department: this.departmentFilter(), role: this.roleFilter(), page: 1, pageSize: 99 }).subscribe({
+      next: (res) => {
+        this.filteredUsers.set(res.items);
+        this.loading.set(false);
+      },
+      error: () => this.loading.set(false),
+    });
+  }
+
   onKeywordChange(event: Event): void {
     this.keyword.set((event.target as HTMLInputElement).value);
+    // this.loadUsers();
   }
 
   onRoleFilterChange(event: Event): void {
     this.roleFilter.set((event.target as HTMLSelectElement).value);
+    this.loadUsers();
   }
 
   onDepartmentFilterChange(event: Event): void {
     this.departmentFilter.set((event.target as HTMLSelectElement).value);
+    this.loadUsers();
   }
 
   resetFilters(): void {

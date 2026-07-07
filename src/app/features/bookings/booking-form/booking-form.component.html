@@ -7,10 +7,11 @@
   <form [formGroup]="form" (ngSubmit)="submit()" class="bg-surface-container-lowest border border-surface-border rounded-xl p-6 shadow-sm space-y-5">
     <div>
       <label class="text-label-md font-label-md">Phòng họp</label>
-      <select formControlName="roomId" class="w-full mt-1 px-3 py-2 border border-surface-border rounded-lg">
+      <select formControlName="roomId" class="w-full mt-1 px-3 py-2 border border-surface-border rounded-lg disabled:bg-surface-container disabled:text-on-surface-variant disabled:cursor-not-allowed">
         <option [ngValue]="null" disabled>-- Chọn phòng họp --</option>
         <option *ngFor="let r of rooms()" [ngValue]="r.id">{{ r.name }} · {{ r.location }} · {{ r.capacity }} người</option>
       </select>
+      <p *ngIf="isEdit" class="text-label-sm text-on-surface-variant mt-1">Không thể đổi phòng họp sau khi đã tạo lịch.</p>
     </div>
 
     <div>

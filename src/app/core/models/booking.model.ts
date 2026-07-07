@@ -78,7 +78,9 @@ export interface BookingRejectRequest {
 export interface BookingSearchParams {
   status?: BookingStatus;
   roomId?: number;
+  roomName?: string;
   createdByUserId?: number;
+  createdByUserName?: string;
   fromDate?: string;
   toDate?: string;
   keyword?: string;

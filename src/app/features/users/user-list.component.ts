@@ -17,8 +17,6 @@ export class UserListComponent implements OnInit {
   loading = signal(true);
 
   // Filters — all signals, so `filteredUsers` reliably recomputes on every change.
-  // (Plain component fields don't establish a dependency for `computed()`, which
-  // was why the role/department filters previously appeared to do nothing.)
   keyword = signal('');
   roleFilter = signal('');
   departmentFilter = signal('');
@@ -36,12 +34,10 @@ export class UserListComponent implements OnInit {
   // nothing is sent to the API on individual checkbox clicks.
   pendingRoleCodes = signal<string[]>([]);
 
-  // Summary stats mirroring the bento row in the design mockup
   activeCount = computed(() => this.users().filter((u) => u.isActive).length);
   lockedCount = computed(() => this.users().filter((u) => !u.isActive).length);
   adminCount = computed(() => this.users().filter((u) => this.hasRole(u, 'ADMIN')).length);
 
-  /** Distinct department list, derived from the loaded users, to populate the filter dropdown */
   departments = computed<string[]>(() => {
     const set = new Set<string>();
     this.users().forEach((u) => {
@@ -50,7 +46,6 @@ export class UserListComponent implements OnInit {
     return Array.from(set).sort();
   });
 
-  /** Client-side filter by role / department on top of the server-side keyword search */
   filteredUsers = computed<AppUser[]>(() => {
     const role = this.roleFilter();
     const dept = this.departmentFilter();
@@ -98,7 +93,6 @@ export class UserListComponent implements OnInit {
     });
   }
 
-  // --- Filter change handlers -------------------------------------------------
   onKeywordChange(event: Event): void {
     this.keyword.set((event.target as HTMLInputElement).value);
   }
@@ -117,7 +111,6 @@ export class UserListComponent implements OnInit {
     this.departmentFilter.set('');
     this.loadUsers();
   }
-  // -----------------------------------------------------------------------
 
   openCreate(): void {
     this.editingUser.set(null);
@@ -203,13 +196,18 @@ export class UserListComponent implements OnInit {
     return user.roles?.some((r) => r === roleCode) ?? false;
   }
 
+  /** Looks up a role's display name from the loaded role list; falls back to the raw code. */
+  roleName(code: string): string {
+    return this.roles().find((r) => r.code === code)?.name ?? code;
+  }
+
   // --- Role assignment modal ---------------------------------------------
   // Checkbox toggles only update local state; the API call fires once, when
   // "Lưu" is clicked, sending the full RoleCodes list the backend expects.
 
   openRoleModal(user: AppUser): void {
     this.roleTargetUser.set(user);
-    this.pendingRoleCodes.set((user.roles ?? []));
+    this.pendingRoleCodes.set(user.roles ?? []);
     this.roleErrorMessage.set(null);
     this.showRoleModal.set(true);
   }
@@ -252,7 +250,6 @@ export class UserListComponent implements OnInit {
   }
   // -----------------------------------------------------------------------
 
-  /** Exports the currently filtered users as a CSV file the browser downloads directly. */
   exportReport(): void {
     const headers = ['Họ tên', 'Email', 'Số điện thoại', 'Phòng ban', 'Chức vụ', 'Tên đăng nhập', 'Vai trò', 'Trạng thái'];
     const rows = this.filteredUsers().map((u) => [

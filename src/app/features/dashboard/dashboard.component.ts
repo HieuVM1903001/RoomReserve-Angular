@@ -123,7 +123,9 @@ export class DashboardComponent implements OnInit {
   private loadSummary(): void {
     const calls: any = {
       rooms: this.roomService.getAll(),
-      myBookings: this.bookingService.getMy({ page: 1, pageSize: 100 }),
+      // Only used to derive counts/chart data for the dashboard, so a capped
+      // page (not the full history) is enough — keep pageSize under 100.
+      myBookings: this.bookingService.getMy({ page: 1, pageSize: 99 }),
     };
     if (this.canApprove) {
       calls.approvals = this.approvalService.getAll({ status: 'PENDING', page: 1, pageSize: 1 });

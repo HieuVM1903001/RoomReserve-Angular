@@ -135,7 +135,7 @@
         <p><span class="text-on-surface-variant">Số người tham gia:</span> {{ b.numberOfParticipants }}</p>
         <p *ngIf="b.description"><span class="text-on-surface-variant">Nội dung:</span> {{ b.description }}</p>
         <p *ngIf="b.note"><span class="text-on-surface-variant">Ghi chú:</span> {{ b.note }}</p>
-        <div *ngIf="b.participants?.length">
+        <div *ngIf="b.participants.length">
           <p class="text-on-surface-variant">Người tham gia:</p>
           <ul class="list-disc pl-5">
             <li *ngFor="let p of b.participants">{{ p.fullName }} ({{ p.email }})</li>

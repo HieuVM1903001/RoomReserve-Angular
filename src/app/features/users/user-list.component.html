@@ -95,7 +95,7 @@
             <th class="px-6 py-4 font-label-md text-label-md">Email</th>
             <th class="px-6 py-4 font-label-md text-label-md">Phòng ban</th>
             <th class="px-6 py-4 font-label-md text-label-md">Chức vụ</th>
-            <th class="px-6 py-4 font-label-md text-label-md">Quyền hạn</th>
+            <th class="px-6 py-4 font-label-md text-label-md">Vai trò</th>
             <th class="px-6 py-4 font-label-md text-label-md">Trạng thái</th>
             <th class="px-6 py-4 font-label-md text-label-md text-right">Thao tác</th>
           </tr>
@@ -114,7 +114,7 @@
             <td class="px-6 py-4 text-body-md text-on-surface-variant">{{ user.department }}</td>
             <td class="px-6 py-4 text-body-md text-on-surface-variant">{{ user.position }}</td>
             <td class="px-6 py-4">
-              <span *ngFor="let r of user.roles" class="badge badge-approved mr-1">{{ r }}</span>
+              <span *ngFor="let code of user.roles" class="badge badge-approved mr-1">{{ roleName(code) }}</span>
             </td>
             <td class="px-6 py-4">
               <span class="badge" [ngClass]="user.isActive ? 'badge-approved' : 'badge-cancelled'">

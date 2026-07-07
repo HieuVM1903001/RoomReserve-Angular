@@ -149,7 +149,7 @@
         <p *ngIf="b.note"><span class="text-on-surface-variant">Ghi chú:</span> {{ b.note }}</p>
         <p *ngIf="b.rejectReason" class="text-status-rejected"><span class="text-on-surface-variant">Lý do từ chối:</span> {{ b.rejectReason }}</p>
         <p *ngIf="b.cancelReason" class="text-status-cancelled"><span class="text-on-surface-variant">Lý do hủy:</span> {{ b.cancelReason }}</p>
-        <div *ngIf="b.participants?.length">
+        <div *ngIf="b.participants.length">
           <p class="text-on-surface-variant">Người tham gia:</p>
           <ul class="list-disc pl-5">
             <li *ngFor="let p of b.participants">{{ p.fullName }} ({{ p.email }})</li>

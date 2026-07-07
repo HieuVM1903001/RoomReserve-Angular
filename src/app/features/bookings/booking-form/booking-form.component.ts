@@ -1,4 +1,4 @@
-import { Component, OnInit, signal , inject } from '@angular/core';
+import { Component, OnInit, signal, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormArray, FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
@@ -49,13 +49,14 @@ export class BookingFormComponent implements OnInit {
 
   ngOnInit(): void {
     this.roomService.getAll().subscribe((rooms) => this.rooms.set(rooms.filter((r) => r.status === 'ACTIVE')));
-    console.log({rooms: this.rooms()  });
+
     const idParam = this.route.snapshot.paramMap.get('id');
     if (idParam) {
       this.bookingId = Number(idParam);
       this.loading.set(true);
       this.bookingService.getById(this.bookingId).subscribe({
         next: (b) => {
+          // Prefill every field with the booking's existing data first...
           this.form.patchValue({
             roomId: b.roomId,
             title: b.title,
@@ -65,7 +66,13 @@ export class BookingFormComponent implements OnInit {
             numberOfParticipants: b.numberOfParticipants,
             note: b.note,
           });
+          this.participants.clear();
           b.participants?.forEach((p) => this.addParticipant(p.fullName, p.email));
+
+          // ...then lock the room field: per spec, the room can't be changed
+          // once a booking exists, only title/description/time/participants/note can.
+          this.form.get('roomId')?.disable();
+
           this.loading.set(false);
         },
         error: () => this.loading.set(false),
@@ -96,12 +103,11 @@ export class BookingFormComponent implements OnInit {
 
   submit(): void {
     if (this.form.invalid) {
-    
       this.errorMessage.set('Vui lòng điền đầy đủ thông tin và đảm bảo dữ liệu hợp lệ.');
       this.form.markAllAsTouched();
       return;
     }
-    const value = this.form.getRawValue();
+    const value = this.form.getRawValue(); // getRawValue() so the disabled roomId is still included
     const start = new Date(value.startTime!);
     const end = new Date(value.endTime!);
 
@@ -117,20 +123,26 @@ export class BookingFormComponent implements OnInit {
     this.errorMessage.set(null);
     this.saving.set(true);
 
-    const payload = {
-      roomId: value.roomId!,
-      title: value.title!,
-      description: value.description || undefined,
-      startTime: start.toISOString(),
-      endTime: end.toISOString(),
-      numberOfParticipants: value.numberOfParticipants!,
-      participants: value.participants as any,
-      note: value.note || undefined,
-    };
-
     const req = this.isEdit
-      ? this.bookingService.update(this.bookingId!, payload)
-      : this.bookingService.create(payload);
+      ? this.bookingService.update(this.bookingId!, {
+          title: value.title!,
+          description: value.description || undefined,
+          startTime: start.toISOString(),
+          endTime: end.toISOString(),
+          numberOfParticipants: value.numberOfParticipants!,
+          participants: value.participants as any,
+          note: value.note || undefined,
+        })
+      : this.bookingService.create({
+          roomId: value.roomId!,
+          title: value.title!,
+          description: value.description || undefined,
+          startTime: start.toISOString(),
+          endTime: end.toISOString(),
+          numberOfParticipants: value.numberOfParticipants!,
+          participants: value.participants as any,
+          note: value.note || undefined,
+        });
 
     req.subscribe({
       next: () => {

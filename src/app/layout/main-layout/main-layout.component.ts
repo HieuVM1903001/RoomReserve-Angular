@@ -62,8 +62,8 @@ export class MainLayoutComponent implements OnInit {
     // Load a light dataset once, used only to power the header quick-search.
     this.roomService.getAll().subscribe((rooms) => this.searchRooms.set(rooms));
     const bookings$ = this.auth.hasAnyRole(['ADMIN', 'APPROVER'])
-      ? this.approvalService.getAll({ page: 1, pageSize: 10 })
-      : this.bookingService.getMy({ page: 1, pageSize: 10 });
+      ? this.approvalService.getAll({ page: 1, pageSize: 99 })
+      : this.bookingService.getMy({ page: 1, pageSize: 99 });
     bookings$.subscribe((res) => this.searchBookings.set(res.items));
   }
 

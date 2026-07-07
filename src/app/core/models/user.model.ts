@@ -9,7 +9,7 @@ export interface AppUser {
   position?: string;
   username: string;
   isActive: boolean;
-  roles: string[];
+  roles: string[]; // role codes, e.g. ["ADMIN", "USER"]
   createdAt?: string;
   updatedAt?: string;
 }
@@ -39,3 +39,6 @@ export interface UserSearchParams {
   page?: number;
   pageSize?: number;
 }
+
+// Re-exported so consumers that only import from user.model still get Role.
+export type { Role };
